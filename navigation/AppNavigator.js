@@ -9,15 +9,15 @@ export default function AppNavigator() {
     return (
         <View style={styles.container}>
             <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-                <Icon name="home" size={24} color="#000" />
+                <Icon name="home" size={32} color="#000" />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('Category')}>
-                <Icon name="info" size={24} color="#000" />
+                <Icon name="info" size={32} color="#000" />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => navigation.navigate('Map')}>
-                <Icon name="map-pin" size={24} color="#000" />
+                <Icon name="map-pin" size={32} color="#000" />
             </TouchableOpacity>
         </View>
     );
@@ -29,14 +29,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingVertical: 10,
+        paddingVertical: 16,  // verhoogd voor meer ruimte
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: 60,
+        height: 80,            // verhoogd van 60 naar 80
         zIndex: 999,
     },
 });
