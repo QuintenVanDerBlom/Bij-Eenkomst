@@ -5,10 +5,12 @@ import {
     StyleSheet,
     SafeAreaView,
     Text,
-    TouchableOpacity,
+    TouchableOpacity, TextInput,
 } from 'react-native';
-import CategoryButton from '../components/CategoryButton';
+import CategoryButton from '../components/CategoryCard';
 import AppNavigator from '../navigation/AppNavigator';
+import Searchbar from '../components/SearchBar';
+import HeaderBar from '../navigation/HeaderBar';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -17,15 +19,21 @@ export default function CategoryScreen() {
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
+            {/* Headerbar bovenaan */}
+            <HeaderBar />
+
+            {/* Terugknop linksboven */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <MaterialIcons name="arrow-back" size={28} color="#444" />
+                </TouchableOpacity>
+            </View>
+
+            {/* Searchbar Component */}
+            <Searchbar />
+
+            {/* Category cards */}
             <ScrollView contentContainerStyle={styles.container}>
-
-                {/* Terugknop linksboven */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <MaterialIcons name="arrow-back" size={28} color="#444" />
-                    </TouchableOpacity>
-                </View>
-
                 <Text style={styles.subtitle}>Kies je categorie</Text>
 
                 <View style={styles.buttonRow}>
@@ -33,6 +41,7 @@ export default function CategoryScreen() {
                 </View>
             </ScrollView>
 
+            {/* Navigatie bar */}
             <AppNavigator />
         </SafeAreaView>
     );
@@ -46,7 +55,10 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         paddingBottom: 10,
+        paddingTop: 10,
+        paddingLeft: 10,
     },
+
     subtitle: {
         fontSize: 18,
         fontWeight: '600',

@@ -7,7 +7,7 @@ import AppNavigator from '../navigation/AppNavigator'; // pas pad aan naar jouw 
 export default function InfoScreen() {
     const route = useRoute();
     const navigation = useNavigation();
-    const { fruit, locationId } = route.params;
+    const { categorie, locationId } = route.params;
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -20,7 +20,7 @@ export default function InfoScreen() {
 
             {/* Content */}
             <View style={styles.container}>
-                <Text style={styles.title}>Locatie voor: {fruit}</Text>
+                <Text style={styles.title}>Locatie voor: {categorie}</Text>
                 <Text style={styles.subtitle}>Locatie ID: {locationId}</Text>
                 {/* Hier kun je meer info ophalen uit een database bijvoorbeeld */}
             </View>

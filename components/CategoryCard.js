@@ -9,34 +9,26 @@ const category = [
     { key: 'Fruit', title: 'Fruit', image: require('../assets/fruits.png') },
 ];
 
-export default function FruitScreen() {
+export default function CategoryCard() {
     const navigation = useNavigation();
     const [search, setSearch] = useState('');
 
-    const filteredFruits = category.filter(fruit =>
+    const filteredCategories = category.filter(fruit =>
         fruit.title.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
         <ScrollView style={styles.scrollView}>
-            <View style={styles.searchContainer}>
-                <TextInput
-                    placeholder="Zoek fruit..."
-                    value={search}
-                    onChangeText={setSearch}
-                    style={styles.searchInput}
-                    clearButtonMode="while-editing"
-                />
-            </View>
-
             <View style={styles.grid}>
-                {filteredFruits.map(({ key, title, image }) => (
+                {filteredCategories.map(({ key, title, image }) => (
+
+
                     <TouchableOpacity
                         key={key}
                         style={styles.card}
                         onPress={() =>
                             navigation.navigate('InfoScreen', {
-                                fruit: key,
+                                categorie: key,
                                 locationId: 'locatie123',
                             })
                         }
@@ -56,19 +48,6 @@ export default function FruitScreen() {
 }
 
 const styles = StyleSheet.create({
-    searchContainer: {
-        paddingHorizontal: 15,
-        paddingVertical: 10,
-    },
-    searchInput: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 20,
-        paddingHorizontal: 15,
-        fontSize: 16,
-        backgroundColor: 'white',
-    },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',

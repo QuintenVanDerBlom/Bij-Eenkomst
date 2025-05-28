@@ -1,24 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 
-export default function SearchBar({ placeholder }) {
+export default function SearchBar() {
+    const [search, setSearch] = useState('');
+
     return (
-        <View style={styles.searchBar}>
+        <View style={styles.searchContainer}>
             <TextInput
-                placeholder={placeholder}
-                style={styles.input}
+                placeholder="Zoek informatie..."
+                value={search}
+                onChangeText={setSearch}
+                style={styles.searchInput}
+                clearButtonMode="while-editing"
             />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    searchBar: {
-        margin: 16,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 24,
-        paddingHorizontal: 16,
+    searchContainer: {
+        paddingHorizontal: 15,
+        paddingVertical: 10,
     },
-    input: { height: 40 },
+    searchInput: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        fontSize: 16,
+        backgroundColor: 'white',
+    },
 });
