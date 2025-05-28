@@ -1,28 +1,24 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-const fruits = [
-    { key: 'aardbei', title: 'Aardbei', icon: 'strawberry' },
-    { key: 'framboos', title: 'Framboos', icon: 'raspberry-pi' },
-    { key: 'kers', title: 'Kers', icon: 'cherry' },
-    { key: 'braam', title: 'Braam', icon: 'leaf' },
+const category = [
+    { key: 'Bijen', title: 'Bijen', image: require('../assets/bee.png') },
+    { key: 'Vlinder', title: 'Vlinder', image: require('../assets/butterfly.png') },
+    { key: 'Bloemen', title: 'Bloemen', image: require('../assets/tulips.png') },
+    { key: 'Fruit', title: 'Fruit', image: require('../assets/fruits.png') },
 ];
 
 export default function FruitScreen() {
     const navigation = useNavigation();
     const [search, setSearch] = useState('');
 
-    // Filter de fruits op basis van search (case insensitive)
-    const filteredFruits = fruits.filter(fruit =>
+    const filteredFruits = category.filter(fruit =>
         fruit.title.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
-        <ScrollView>
-
-            {/* Zoekbalk */}
+        <ScrollView style={styles.scrollView}>
             <View style={styles.searchContainer}>
                 <TextInput
                     placeholder="Zoek fruit..."
@@ -33,22 +29,25 @@ export default function FruitScreen() {
                 />
             </View>
 
-            {/* Grid met gefilterde fruit */}
             <View style={styles.grid}>
-                {filteredFruits.map(({ key, title, icon }) => (
+                {filteredFruits.map(({ key, title, image }) => (
                     <TouchableOpacity
                         key={key}
                         style={styles.card}
                         onPress={() =>
                             navigation.navigate('InfoScreen', {
                                 fruit: key,
-                                locationId: 'locatie123', // als je bijvoorbeeld unieke locatiegegevens hebt
+                                locationId: 'locatie123',
                             })
                         }
                         activeOpacity={0.7}
                     >
+                        <Image
+                            source={image}
+                            style={styles.categoryImage}
+                            resizeMode="contain"
+                        />
                         <Text style={styles.title}>{title}</Text>
-                        <MaterialCommunityIcons name={icon} size={64} color="gold" />
                     </TouchableOpacity>
                 ))}
             </View>
@@ -60,7 +59,6 @@ const styles = StyleSheet.create({
     searchContainer: {
         paddingHorizontal: 15,
         paddingVertical: 10,
-        backgroundColor: '#fff',
     },
     searchInput: {
         height: 40,
@@ -69,7 +67,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         paddingHorizontal: 15,
         fontSize: 16,
-        backgroundColor: '#fff8c4',
+        backgroundColor: 'white',
     },
     grid: {
         flexDirection: 'row',
@@ -80,7 +78,7 @@ const styles = StyleSheet.create({
     },
     card: {
         width: '45%',
-        backgroundColor: '#fff8c4',
+        backgroundColor: '#ffdd00', // gele achtergrond
         borderRadius: 12,
         paddingVertical: 20,
         alignItems: 'center',
@@ -91,10 +89,15 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 3,
     },
+    categoryImage: {
+        width: 64,
+        height: 64,
+        marginBottom: 12,
+    },
     title: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: '700',
-        color: 'goldenrod',
-        marginBottom: 10,
+        color: 'black', // zwart
+        textAlign: 'center',
     },
 });

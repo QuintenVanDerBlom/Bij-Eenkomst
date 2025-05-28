@@ -7,12 +7,12 @@ import {
     Text,
     TouchableOpacity,
 } from 'react-native';
-import FruitButton from '../components/FruitButton';
+import CategoryButton from '../components/CategoryButton';
 import AppNavigator from '../navigation/AppNavigator';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-export default function CategoryScreen({ username = 'Marijn', content = 'Geen info beschikbaar' }) {
+export default function CategoryScreen() {
     const navigation = useNavigation();
 
     return (
@@ -29,7 +29,7 @@ export default function CategoryScreen({ username = 'Marijn', content = 'Geen in
                 <Text style={styles.subtitle}>Kies je categorie</Text>
 
                 <View style={styles.buttonRow}>
-                    <FruitButton />
+                    <CategoryButton />
                 </View>
             </ScrollView>
 
