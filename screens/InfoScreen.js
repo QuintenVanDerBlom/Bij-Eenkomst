@@ -17,25 +17,29 @@ export default function InfoScreen() {
     const navigation = useNavigation();
     const { categorie, locationId } = route.params;
 
-    // Uitgebreide dummy data
+    // Uitgebreide dummy data met extraDetails toegevoegd
     const data = {
         hoofdInformatie: `Informatie over ${categorie}. Deze categorie richt zich op planten die bijdragen aan de leefomgeving van bijen en vlinders.`,
         subInformatie: [
             {
                 titel: "Zonnebloem",
                 beschrijving: "Zonnebloemen bloeien in de zomer en bevatten veel nectar. Ze zijn ideaal voor bijen en zorgen ook voor mooie zaadjes in de herfst.",
+                extraDetails: "Zonnebloemen kunnen tot wel 3 meter hoog worden en trekken vele verschillende soorten bijen en vogels aan. Ze zijn ook belangrijk voor landbouw als gewas.",
             },
             {
                 titel: "Lavendel",
                 beschrijving: "Lavendel is een geurige plant die bijen aantrekt door zijn geur en lange bloeiperiode. Perfect voor zonnige tuinen.",
+                extraDetails: "Lavendel wordt ook veel gebruikt voor etherische oliën en aromatherapie. De plant bloeit meestal van juni tot augustus.",
             },
             {
                 titel: "Klaproos",
                 beschrijving: "Deze felrode bloemen zijn een nectarbron voor wilde bijen en geven kleur aan bermen en tuinen.",
+                extraDetails: "Klaprozen zijn vaak te vinden in wilde velden en staan symbool voor rust en vrede. Ze zijn ook belangrijk voor de biodiversiteit.",
             },
             {
                 titel: "Wilde Marjolein",
                 beschrijving: "Ook wel oregano genoemd. Deze plant bloeit lang en trekt een verscheidenheid aan bestuivers aan.",
+                extraDetails: "Wilde Marjolein wordt ook gebruikt in de keuken en als medicinale plant. De bloemen hebben een zachte geur die insecten aantrekt.",
             },
         ],
     };
@@ -80,6 +84,15 @@ export default function InfoScreen() {
                             {expanded === index && (
                                 <View style={styles.accordionContent}>
                                     <Text>{item.beschrijving}</Text>
+                                    <TouchableOpacity
+                                        onPress={() => navigation.navigate('SubInfo', {
+                                            titel: item.titel,
+                                            beschrijving: item.beschrijving,
+                                            extraDetails: item.extraDetails,
+                                        })}
+                                    >
+                                        <Text style={styles.moreInfoLink}>Meer info ➔</Text>
+                                    </TouchableOpacity>
                                 </View>
                             )}
                         </View>
@@ -140,5 +153,10 @@ const styles = StyleSheet.create({
     accordionContent: {
         padding: 12,
         backgroundColor: '#fff',
+    },
+    moreInfoLink: {
+        marginTop: 10,
+        color: '#007BFF',
+        fontWeight: '600',
     },
 });
