@@ -16,7 +16,7 @@
         useEffect(() => {
             async function fetchEntries() {
                 try {
-                    const response = await fetch(`http://145.137.59.228:5000/api/entries?category_id=${categoryId}`);
+                    const response = await fetch(`http://145.137.57.63:5000/api/entries?category_id=${categoryId}`);
                     const data = await response.json();
 
                     if (Array.isArray(data)) {
