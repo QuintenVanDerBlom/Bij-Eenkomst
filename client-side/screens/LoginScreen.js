@@ -6,19 +6,58 @@ import {
     TouchableOpacity,
     StyleSheet,
     SafeAreaView,
+    Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import AppNavigator from '../navigation/AppNavigator';
+import HomeScreen from "./HomeScreen";
 
 export default function LoginScreen() {
     const navigation = useNavigation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setloading] = useState('');
 
-    const handleLogin = () => {
-        // Hier zou je authenticatie logica doen
-        alert(`Inloggen met:\nEmail: ${email}\nWachtwoord: ${password}`);
+    const handleLogin = async () => {
+        if (!email) {
+            Alert.alert("Vul uw e-mail in")
+        }
+
+        if (!password) {
+            Alert.alert("Vul uw wachtwoord in")
+        }
+
+        setLoading(true)
+
+        try {
+            const response = await fetch('https://jouw-api-url.com/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Inloggen mislukt');
+            }
+
+            if (data.role === 'admin') {
+                navigation.navigate('AdminDashboard');
+            } else {
+                Alert.alert('Geen toegang', 'Alleen admins kunnen inloggen.');
+                navigation.navigate('Home')
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Fout', error.message);
+        }
+
+        setLoading(false);
+
     };
 
     return (
