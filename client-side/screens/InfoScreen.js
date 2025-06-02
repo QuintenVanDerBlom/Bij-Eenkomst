@@ -23,21 +23,38 @@ export default function InfoScreen() {
         subInformatie: [
             {
                 titel: "Zonnebloem",
+                imageKey: "sunflower",
                 beschrijving: "Zonnebloemen bloeien in de zomer en bevatten veel nectar. Ze zijn ideaal voor bijen en zorgen ook voor mooie zaadjes in de herfst.",
+                insects: [
+                    "bee"
+                ],
                 extraDetails: "Zonnebloemen kunnen tot wel 3 meter hoog worden en trekken vele verschillende soorten bijen en vogels aan. Ze zijn ook belangrijk voor landbouw als gewas.",
             },
             {
                 titel: "Lavendel",
+                imageKey: "lavender",
+                insects: [
+                    "bee"
+                ],
                 beschrijving: "Lavendel is een geurige plant die bijen aantrekt door zijn geur en lange bloeiperiode. Perfect voor zonnige tuinen.",
                 extraDetails: "Lavendel wordt ook veel gebruikt voor etherische oliën en aromatherapie. De plant bloeit meestal van juni tot augustus.",
             },
             {
                 titel: "Klaproos",
+                imageKey: "rose",
+                insects: [
+                    "bee"
+                ],
                 beschrijving: "Deze felrode bloemen zijn een nectarbron voor wilde bijen en geven kleur aan bermen en tuinen.",
                 extraDetails: "Klaprozen zijn vaak te vinden in wilde velden en staan symbool voor rust en vrede. Ze zijn ook belangrijk voor de biodiversiteit.",
             },
             {
                 titel: "Wilde Marjolein",
+                imageKey: "marjoram",
+                insects: [
+                    "bee",
+                    "butterfly"
+                ],
                 beschrijving: "Ook wel oregano genoemd. Deze plant bloeit lang en trekt een verscheidenheid aan bestuivers aan.",
                 extraDetails: "Wilde Marjolein wordt ook gebruikt in de keuken en als medicinale plant. De bloemen hebben een zachte geur die insecten aantrekt.",
             },
@@ -87,7 +104,9 @@ export default function InfoScreen() {
                                     <TouchableOpacity
                                         onPress={() => navigation.navigate('SubInfo', {
                                             titel: item.titel,
+                                            imageKey: item.imageKey,
                                             beschrijving: item.beschrijving,
+                                            insects: item.insects,
                                             extraDetails: item.extraDetails,
                                         })}
                                     >
