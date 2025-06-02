@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { useNavigation } from '@react-navigation/native';
 
@@ -8,16 +8,16 @@ export default function AppNavigator() {
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity onPress={() => navigation.navigate('Home')}>
-                <Icon name="home" size={24} color="#000" />
+            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Home')}>
+                <Icon name="home" size={32} color="#000" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Category')}>
-                <Icon name="info" size={24} color="#000" />
+            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Category')}>
+                <Icon name="info" size={32} color="#000" />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Map')}>
-                <Icon name="map-pin" size={24} color="#000" />
+            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Map')}>
+                <Icon name="map-pin" size={32} color="#000" />
             </TouchableOpacity>
         </View>
     );
@@ -29,14 +29,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingVertical: 10,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: 60,
+        height: 80,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
         zIndex: 999,
+    },
+    navItem: {
+        flex: 1, // zorgt dat elke knop 1/3 inneemt
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100%',
     },
 });
