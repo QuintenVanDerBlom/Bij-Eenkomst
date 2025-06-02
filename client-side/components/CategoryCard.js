@@ -49,8 +49,8 @@ export default function CategoryCard() {
                         style={styles.card}
                         onPress={() =>
                             navigation.navigate('InfoScreen', {
-                                categorie: name,
-                                locationId: 'locatie123',
+                                categoryId: _id,
+                                categoryName: name,
                             })
                         }
                         activeOpacity={0.7}

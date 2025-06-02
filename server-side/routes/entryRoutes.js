@@ -13,10 +13,14 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Read all entries
+// Read all entries, met filter op category_id als query param
 router.get('/', async (req, res) => {
     try {
-        const entries = await Entry.find()
+        const filter = {};
+        if (req.query.category_id) {
+            filter.category_id = req.query.category_id;
+        }
+        const entries = await Entry.find(filter)
             .populate('category_id')
             .populate('sub_category_id')
             .populate('created_by');
