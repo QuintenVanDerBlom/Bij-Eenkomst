@@ -5,6 +5,7 @@ import CategoryScreen from './screens/CategoryScreen';
 import MapScreen from './screens/MapScreen';
 import InfoScreen from "./screens/InfoScreen";
 import LoginScreen from "./screens/LoginScreen";
+import SubInfoScreen from "./screens/SubInfoScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -17,6 +18,7 @@ export default function App() {
                 <Stack.Screen name="InfoScreen" component={InfoScreen} />
                 <Stack.Screen name="Map" component={MapScreen} />
                 <Stack.Screen name="Login" component={LoginScreen} />
+                <Stack.Screen name="SubInfo" component={SubInfoScreen} options={{ title: 'Meer Informatie' }} />
             </Stack.Navigator>
         </NavigationContainer>
     );
