@@ -1,45 +1,66 @@
-import React, { useState } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const category = [
-    { key: 'Bijen', title: 'Bijen', image: require('../assets/bee.png') },
-    { key: 'Vlinder', title: 'Vlinder', image: require('../assets/butterfly.png') },
-    { key: 'Bloemen', title: 'Bloemen', image: require('../assets/tulips.png') },
-    { key: 'Fruit', title: 'Fruit', image: require('../assets/fruits.png') },
-];
+const imageMap = {
+    Bijen: require('../assets/bee.png'),
+    Vlinders: require('../assets/butterfly.png'),
+    Flora: require('../assets/tulips.png'),
+    Voeding: require('../assets/fruits.png'),
+};
 
 export default function CategoryCard() {
     const navigation = useNavigation();
     const [search, setSearch] = useState('');
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredCategories = category.filter(fruit =>
-        fruit.title.toLowerCase().includes(search.toLowerCase())
+    useEffect(() => {
+        fetch('http://145.137.59.228:5000/api/categories') // vervang <JOUW-IP-ADRES> met bv. 192.168.1.120
+            .then(res => res.json())
+            .then(data => {
+                setCategories(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Fout bij ophalen categorieën:', err);
+                setLoading(false);
+            });
+    }, []);
+
+    const filteredCategories = categories.filter(c =>
+        c.name.toLowerCase().includes(search.toLowerCase())
     );
+
+    if (loading) {
+        return (
+            <View style={styles.loader}>
+                <ActivityIndicator size="large" color="#ffdd00" />
+            </View>
+        );
+    }
 
     return (
         <ScrollView style={styles.scrollView}>
             <View style={styles.grid}>
-                {filteredCategories.map(({ key, title, image }) => (
-
-
+                {filteredCategories.map(({ _id, name }) => (
                     <TouchableOpacity
-                        key={key}
+                        key={_id}
                         style={styles.card}
                         onPress={() =>
                             navigation.navigate('InfoScreen', {
-                                categorie: key,
+                                categorie: name,
                                 locationId: 'locatie123',
                             })
                         }
                         activeOpacity={0.7}
                     >
                         <Image
-                            source={image}
+                            source={imageMap[name] || require('../assets/bee.png')}
                             style={styles.categoryImage}
                             resizeMode="contain"
                         />
-                        <Text style={styles.title}>{title}</Text>
+                        <Text style={styles.title}>{name}</Text>
                     </TouchableOpacity>
                 ))}
             </View>
@@ -48,16 +69,18 @@ export default function CategoryCard() {
 }
 
 const styles = StyleSheet.create({
+    scrollView: {
+        flex: 1,
+    },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-around',
         marginHorizontal: 10,
-        marginTop: 10,
     },
     card: {
         width: '45%',
-        backgroundColor: '#ffdd00', // gele achtergrond
+        backgroundColor: '#ffdd00',
         borderRadius: 12,
         paddingVertical: 20,
         alignItems: 'center',
@@ -76,7 +99,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: '700',
-        color: 'black', // zwart
+        color: 'black',
         textAlign: 'center',
+    },
+    loader: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
