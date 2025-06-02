@@ -22,13 +22,6 @@ export default function CategoryScreen() {
             {/* Headerbar bovenaan */}
             <HeaderBar />
 
-            {/* Terugknop linksboven */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <MaterialIcons name="arrow-back" size={28} color="#444" />
-                </TouchableOpacity>
-            </View>
-
             {/* Searchbar Component */}
             <Searchbar />
 
