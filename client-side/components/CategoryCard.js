@@ -16,7 +16,7 @@ export default function CategoryCard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('http://145.137.59.228:5000/api/categories') // vervang <JOUW-IP-ADRES> met bv. 192.168.1.120
+        fetch('http://145.24.223.126:5000/api/categories') // vervang <JOUW-IP-ADRES> met bv. 192.168.1.120
             .then(res => res.json())
             .then(data => {
                 setCategories(data);

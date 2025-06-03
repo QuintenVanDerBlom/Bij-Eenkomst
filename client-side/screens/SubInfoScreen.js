@@ -24,7 +24,7 @@ export default function SubDetailScreen() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const response = await fetch(`http://145.137.59.228:5000/api/entries/${id}`);
+                const response = await fetch(`http://145.24.223.126:5000/api/entries/${id}`);
                 const json = await response.json();
                 setData(json);
             } catch (error) {
