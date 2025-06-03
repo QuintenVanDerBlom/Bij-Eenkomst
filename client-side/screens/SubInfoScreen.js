@@ -1,13 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    SafeAreaView,
-    ScrollView,
-    TouchableOpacity,
-    Image,
-} from 'react-native';
+import {View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
@@ -16,39 +8,43 @@ import AppNavigator from '../navigation/AppNavigator';
 export default function SubDetailScreen() {
     const route = useRoute();
     const navigation = useNavigation();
-    // const { titel, imageKey, beschrijving, insects, extraDetails, links } = route.params;
     const { id } = route.params
-    const [entrie, setEntrie] = useState([]);
+    const [entry, setEntry] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        async function fetchEntrie() {
+        async function fetchEntry() {
             try {
-                const response = await fetch(`http://145.137.57.63:5000/api/entries/${id}`);
+                const response = await fetch(`http://145.24.223.126:5000/api/entries/${id}`);
                 const data = await response.json();
 
-                setEntrie(data);
+                setEntry(data);
+                setLoading(false);
                 // console.log("Fetched data:", data);
 
             } catch (error) {
                 console.error('Error fetching entries:', error);
-                setEntrie([]);
-            } finally {
+                setEntry([]);
                 setLoading(false);
             }
         }
 
-        fetchEntrie();
+        fetchEntry();
     }, [id]);
 
-    // const imageMap = {
-    //     sunflower: require('../assets/sunflower.png'),
-    //     lavender: require('../assets/lavender.png'),
-    //     rose: require('../assets/rose.png'),
-    //     marjoram: require('../assets/marjoram.png'),
-    //     bee: require('../assets/bee.png'),
-    //     butterfly: require('../assets/butterfly.png'),
-    // };
+    const imageMap = {
+        Zonnebloem: require('../assets/sunflower.png'),
+        Lavendel: require('../assets/lavender.png'),
+        Klaproos: require('../assets/rose.png'),
+    };
+
+    if (loading) {
+        return (
+            <View style={styles.loader}>
+                <ActivityIndicator size="large" color="#ffdd00" />
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -58,23 +54,24 @@ export default function SubDetailScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <MaterialIcons name="arrow-back" size={28} color="#444" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{entrie.title}</Text>
+                <Text style={styles.headerTitle}>{entry.title}</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
 
                 <Image
-                    source={require('../assets/sunflower.png')}
+                    source={imageMap[entry.title] || require('../assets/bee.png')}
                     style={styles.titleImage}
                 />
 
                 <View style={styles.contentSection}>
                     <Text style={styles.label}>Beschrijving:</Text>
-                    <Text style={styles.text}>{entrie.description}</Text>
+                    <Text style={styles.text}>{entry.description}</Text>
                 </View>
 
                 <View style={styles.contentSection}>
                     <Text style={styles.label}>Bijbehorende insecten:</Text>
+                    <Text>Dit moet nog in de database gezet worden</Text>
                     {/*<View style={styles.insectContent}>*/}
                     {/*    {insects.map((insect, index) => (*/}
                     {/*        <Image*/}
@@ -89,21 +86,12 @@ export default function SubDetailScreen() {
                 <View style={styles.contentSection}>
                     <Text style={styles.label}>Extra informatie:</Text>
                     {/*<Text style={styles.text}>{extraDetails}</Text>*/}
+                    <Text>Dit moet nog in de database gezet worden</Text>
                 </View>
 
                 <View style={styles.contentSection}>
                     <Text style={styles.label}>Bronnen:</Text>
-                    {/*<Text>*/}
-                    {/*    {links.map((link, index) => (*/}
-
-                    {/*        {link}*/}
-                    {/*    ))}*/}
-                    {/*</Text>*/}
-                    {/*{links.map((link, index) => (*/}
-                    {/*    <Text key={index}>*/}
-                    {/*        {link}*/}
-                    {/*    </Text>*/}
-                    {/*))}*/}
+                    <Text>Dit moet nog in de database gezet worden</Text>
                 </View>
 
             </ScrollView>
@@ -170,5 +158,10 @@ const styles = StyleSheet.create({
         margin: 10,
         height: 50,
         width: 50,
-    }
+    },
+    loader: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 });
