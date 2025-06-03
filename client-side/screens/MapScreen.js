@@ -1,44 +1,143 @@
-import React from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
-import { Ionicons } from '@expo/vector-icons'; // of 'react-native-vector-icons/Ionicons' in bare RN
+import { Ionicons } from '@expo/vector-icons';
+
+const API_URL = 'http://145.24.223.126:5000/api/locations';
 
 export default function MapScreen() {
     const navigation = useNavigation();
-    const [pins, setPins] = React.useState([
-        { id: 1, lat: 51.9225, lon: 4.47917, title: 'Locatie A' },
-        { id: 2, lat: 51.924, lon: 4.481, title: 'Locatie B' },
-    ]);
-    const [newPin, setNewPin] = React.useState(null);
-    const [pinTitle, setPinTitle] = React.useState('');
+    const [pins, setPins] = useState([]);
+    const [newPin, setNewPin] = useState(null);
+    const [pinTitle, setPinTitle] = useState('');
+    const [editingPin, setEditingPin] = useState(null);
+
+    useEffect(() => {
+        fetchLocations();
+    }, []);
+
+    const fetchLocations = async () => {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error('Failed to fetch locations');
+            const data = await response.json();
+            setPins(data);
+        } catch (error) {
+            console.error('Error fetching locations:', error);
+            Alert.alert('Error', 'Failed to fetch locations');
+        }
+    };
 
     const handleMapPress = (e) => {
         const { latitude, longitude } = e.nativeEvent.coordinate;
         setNewPin({ latitude, longitude });
         setPinTitle('');
+        setEditingPin(null);
     };
 
-    const addPin = () => {
+    const addPin = async () => {
         if (newPin && pinTitle) {
-            setPins(prevPins => [
-                ...prevPins,
-                { 
-                    id: Date.now(),
+            try {
+                const newLocation = {
                     lat: newPin.latitude,
                     lon: newPin.longitude,
                     title: pinTitle
-                }
-            ]);
-            setNewPin(null);
-            setPinTitle('');
+                };
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newLocation),
+                });
+                if (!response.ok) throw new Error('Failed to add location');
+                const data = await response.json();
+                setPins(prevPins => [...prevPins, data]);
+                setNewPin(null);
+                setPinTitle('');
+            } catch (error) {
+                console.error('Error adding location:', error);
+                Alert.alert('Error', 'Failed to add location');
+            }
+        }
+    };
+
+    const handlePinPress = (pin) => {
+        setEditingPin(pin);
+        setPinTitle(pin.title);
+        setNewPin(null);
+    };
+
+    const updatePin = async () => {
+        if (editingPin && pinTitle) {
+            try {
+                const updatedLocation = {
+                    ...editingPin,
+                    title: pinTitle
+                };
+                
+                const response = await fetch(`${API_URL}/${editingPin.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedLocation),
+                });
+                if (!response.ok) throw new Error('Failed to update location');
+                const data = await response.json();
+                setPins(prevPins => 
+                    prevPins.map(pin => 
+                        pin.id === editingPin.id ? data : pin
+                    )
+                );
+                setEditingPin(null);
+                setPinTitle('');
+            } catch (error) {
+                console.error('Error updating location:', error);
+                Alert.alert('Error', 'Failed to update location');
+            }
+        }
+    };
+
+    const deletePin = async () => {
+        if (editingPin) {
+            Alert.alert(
+                'Confirm Delete',
+                `Are you sure you want to delete "${editingPin.title}"?`,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: async () => {
+                            try {
+                                const response = await fetch(`${API_URL}/${editingPin.id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                });
+                                if (!response.ok) throw new Error('Failed to delete location');
+                                setPins(prevPins => prevPins.filter(pin => pin.id !== editingPin.id));
+                                setEditingPin(null);
+                                setPinTitle('');
+                            } catch (error) {
+                                console.error('Error deleting location:', error);
+                                Alert.alert('Error', 'Failed to delete location');
+                            }
+                        },
+                    },
+                ]
+            );
         }
     };
 
     return (
         <View style={styles.container}>
-            {/* Terugknop bovenin */}
+            {/* Header with back button */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
@@ -46,7 +145,7 @@ export default function MapScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Kaart */}
+            {/* Map */}
             <MapView
                 style={styles.map}
                 initialRegion={{
@@ -62,6 +161,7 @@ export default function MapScreen() {
                         key={pin.id}
                         coordinate={{ latitude: pin.lat, longitude: pin.lon }}
                         title={pin.title}
+                        onPress={() => handlePinPress(pin)}
                     />
                 ))}
                 {newPin && (
@@ -72,21 +172,48 @@ export default function MapScreen() {
                     />
                 )}
             </MapView>
-            {newPin && (
+
+            {/* Input for new/edit pin */}
+            {(newPin || editingPin) && (
                 <View style={styles.pinInputContainer}>
                     <TextInput
                         style={styles.pinInput}
-                        placeholder="Voer een naam in voor de nieuwe locatie"
+                        placeholder={editingPin ? "Wijzig locatie naam" : "Voer een naam in voor de nieuwe locatie"}
                         onChangeText={(text) => setPinTitle(text)}
                         value={pinTitle}
                     />
-                    <TouchableOpacity style={styles.pinButton} onPress={() => addPin(pinTitle)}>
-                        <Text style={styles.pinButtonText}>Voeg toe</Text>
-                    </TouchableOpacity>
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity 
+                            style={[styles.pinButton, styles.cancelButton]} 
+                            onPress={() => {
+                                setNewPin(null);
+                                setEditingPin(null);
+                                setPinTitle('');
+                            }}
+                        >
+                            <Text style={styles.pinButtonText}>Annuleren</Text>
+                        </TouchableOpacity>
+                        {editingPin && (
+                            <TouchableOpacity 
+                                style={[styles.pinButton, styles.deleteButton]} 
+                                onPress={deletePin}
+                            >
+                                <Text style={styles.pinButtonText}>Verwijderen</Text>
+                            </TouchableOpacity>
+                        )}
+                        <TouchableOpacity 
+                            style={[styles.pinButton, styles.saveButton]} 
+                            onPress={editingPin ? updatePin : addPin}
+                        >
+                            <Text style={styles.pinButtonText}>
+                                {editingPin ? 'Bijwerken' : 'Voeg toe'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             )}
 
-            {/* Onderbalk */}
+            {/* Bottom navigation */}
             <AppNavigator />
         </View>
     );
@@ -96,27 +223,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         position: 'relative',
-    },
-    addLocationButton: {
-        position: 'absolute',
-        bottom: 60,
-        right: 20,
-        backgroundColor: '#4CAF50',
-        padding: 15,
-        borderRadius: 5,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    addLocationButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
     },
     header: {
         position: 'absolute',
@@ -157,10 +263,11 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     pinButton: {
-        backgroundColor: '#007AFF',
+        flex: 1,
         padding: 10,
         borderRadius: 5,
         alignItems: 'center',
+        marginHorizontal: 5,
     },
     pinButtonText: {
         color: 'white',
@@ -175,8 +282,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
     },
-    map: {
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height,
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    cancelButton: {
+        backgroundColor: '#f44336',
+    },
+    saveButton: {
+        backgroundColor: '#007AFF',
+    },
+    deleteButton: {
+        backgroundColor: '#d32f2f',
     },
 });
