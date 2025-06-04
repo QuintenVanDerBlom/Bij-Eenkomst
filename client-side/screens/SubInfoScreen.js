@@ -20,7 +20,6 @@ export default function SubDetailScreen() {
 
                 setEntry(data);
                 setLoading(false);
-                // console.log("Fetched data:", data);
 
             } catch (error) {
                 console.error('Error fetching entries:', error);
@@ -36,6 +35,8 @@ export default function SubDetailScreen() {
         Zonnebloem: require('../assets/sunflower.png'),
         Lavendel: require('../assets/lavender.png'),
         Klaproos: require('../assets/rose.png'),
+        Bij: require('../assets/bee.png'),
+        Vlinder: require('../assets/bee.png')
     };
 
     if (loading) {
@@ -69,24 +70,24 @@ export default function SubDetailScreen() {
                     <Text style={styles.text}>{entry.description}</Text>
                 </View>
 
-                <View style={styles.contentSection}>
-                    <Text style={styles.label}>Bijbehorende insecten:</Text>
-                    <Text>Dit moet nog in de database gezet worden</Text>
-                    {/*<View style={styles.insectContent}>*/}
-                    {/*    {insects.map((insect, index) => (*/}
-                    {/*        <Image*/}
-                    {/*            key={index}*/}
-                    {/*            source={imageMap[insect]}*/}
-                    {/*            style={styles.insectImage}*/}
-                    {/*        />*/}
-                    {/*    ))}*/}
-                    {/*</View>*/}
-                </View>
+                {entry.sub_images && entry.sub_images.length > 0 && (
+                    <View style={styles.contentSection}>
+                        <Text style={styles.label}>Foto's:</Text>
+                        <View style={styles.insectContent}>
+                            {entry.sub_images.map((insect, index) => (
+                                <Image
+                                    key={index}
+                                    source={{uri: insect}}
+                                    style={styles.insectImage}
+                                />
+                            ))}
+                        </View>
+                    </View>
+                )}
 
                 <View style={styles.contentSection}>
                     <Text style={styles.label}>Extra informatie:</Text>
-                    {/*<Text style={styles.text}>{extraDetails}</Text>*/}
-                    <Text>Dit moet nog in de database gezet worden</Text>
+                    <Text style={styles.text}>{entry.information}</Text>
                 </View>
 
                 <View style={styles.contentSection}>
@@ -156,8 +157,8 @@ const styles = StyleSheet.create({
     },
     insectImage: {
         margin: 10,
-        height: 50,
-        width: 50,
+        height: 100,
+        width: 100,
     },
     loader: {
         flex: 1,
