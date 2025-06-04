@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
@@ -90,10 +91,10 @@ export default function SubDetailScreen() {
                     <Text style={styles.text}>{entry.information}</Text>
                 </View>
 
-                <View style={styles.contentSection}>
-                    <Text style={styles.label}>Bronnen:</Text>
-                    <Text>Dit moet nog in de database gezet worden</Text>
-                </View>
+                {/*<View style={styles.contentSection}>*/}
+                {/*    <Text style={styles.label}>Bronnen:</Text>*/}
+                {/*    <Text>Dit moet nog in de database gezet worden</Text>*/}
+                {/*</View>*/}
 
             </ScrollView>
 

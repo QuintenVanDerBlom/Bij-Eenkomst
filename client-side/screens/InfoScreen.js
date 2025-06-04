@@ -1,5 +1,6 @@
     import React, { useEffect, useState } from 'react';
-    import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+    import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+    import { SafeAreaView } from 'react-native-safe-area-context';
     import { useRoute, useNavigation } from '@react-navigation/native';
     import { MaterialIcons } from '@expo/vector-icons';
     import HeaderBar from '../navigation/HeaderBar';
