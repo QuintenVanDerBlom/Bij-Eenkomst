@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Image, ActivityIndicator } from 'react-native';
-
 import { useNavigation } from '@react-navigation/native';
 
 const imageMap = {
@@ -17,7 +16,7 @@ export default function CategoryCard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`http://145.24.223.126:5000/api/categories`)
+        fetch('http://145.24.223.126:5000/api/categories') // vervang <JOUW-IP-ADRES> met bv. 192.168.1.120
             .then(res => res.json())
             .then(data => {
                 setCategories(data);
