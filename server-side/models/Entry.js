@@ -11,6 +11,8 @@ const entrySchema = new mongoose.Schema({
     head_image: { type: String, required: true },
     sub_images: [{ type: String }],
 
+    information: { type: String, required: true },
+
     linked_categories: [
         { type: mongoose.Schema.Types.ObjectId, ref: 'Category' }
     ]
