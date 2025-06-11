@@ -51,7 +51,7 @@ export default function HomeScreen() {
                     <Text style={styles.loginLink}>Secret Admin login</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => navigation.navigate('Admin')}>
+                <TouchableOpacity onPress={() => navigation.navigate('TestMarijn')}>
                     <Text style={styles.loginLink}>to Admin page</Text>
                 </TouchableOpacity>
             </View>
