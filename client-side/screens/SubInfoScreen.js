@@ -6,56 +6,49 @@ import {
     TouchableOpacity,
     SafeAreaView,
     ScrollView,
-    ActivityIndicator,
-    Image
+    ActivityIndicator
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
 import { db } from "../firebaseConfig";
-import {collection, query, where, getDoc, doc} from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 
-export default function InfoScreen() {
+export default function SubInfoScreen() {
     const route = useRoute();
     const navigation = useNavigation();
-    const { entryId } = route.params;
-    const [entry, setEntry] = useState(null);
-    const [expanded, setExpanded] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { subcategoryId } = route.params;
 
-    const imageMap = {
-        Zonnebloem: require('../assets/sunflower.png'),
-        Lavendel: require('../assets/lavender.png'),
-        Klaproos: require('../assets/rose.png'),
-        Bij: require('../assets/bee.png'),
-        Vlinder: require('../assets/bee.png')
-    };
+    const [entries, setEntries] = useState([]);
+    const [subcategory, setSubcategory] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [expanded, setExpanded] = useState(null);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const docRef = doc(db, 'entries', entryId);
-                const docSnap = await getDoc(docRef);
+                // Fetch entries with subcategory_id
+                const q = query(collection(db, 'entries'), where('sub_category_id', '==', subcategoryId));
+                const querySnapshot = await getDocs(q);
+                const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setEntries(data);
 
-                if (docSnap.exists()) {
-                    setEntry({ id: docSnap.id, ...docSnap.data() });
-                } else {
-                    setEntry(null);
+                // Fetch subcategory details
+                const subRef = doc(db, 'subcategories', subcategoryId);
+                const subSnap = await getDoc(subRef);
+                if (subSnap.exists()) {
+                    setSubcategory({ id: subSnap.id, ...subSnap.data() });
                 }
-
-                // setEntries(data);
-                // console.log("categoryId", entryId);
-                console.log("entries", entry);
             } catch (error) {
-                console.error('Error loading entries:', error);
+                console.error('Error loading data:', error);
             } finally {
                 setLoading(false);
             }
         };
 
         loadData();
-    }, [entryId]);
+    }, [subcategoryId]);
 
     const toggleExpand = (index) => {
         setExpanded(expanded === index ? null : index);
@@ -77,46 +70,42 @@ export default function InfoScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <MaterialIcons name="arrow-back" size={28} color="#444" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{entry.title}</Text>
+                <Text style={styles.headerTitle}>{subcategory?.name || 'Subcategorie Info'}</Text>
             </View>
 
-            <ScrollView contentContainerStyle={styles.content}>
+            {subcategory?.description && (
+                <Text style={styles.subcategoryDescription}>{subcategory.description}</Text>
+            )}
 
-                <Image
-                    source={imageMap[entry.head_image] || require('../assets/bee.png')}
-                    style={styles.titleImage}
-                />
+            <ScrollView contentContainerStyle={styles.container}>
+                {entries.length === 0 ? (
+                    <Text>Geen entries gevonden voor deze subcategorie.</Text>
+                ) : (
+                    entries.map((entry, index) => (
+                        <View key={entry.id} style={styles.accordionItem}>
+                            <TouchableOpacity
+                                style={styles.accordionHeader}
+                                onPress={() => toggleExpand(index)}
+                            >
+                                <Text style={styles.accordionTitle}>{entry.title}</Text>
+                                <MaterialIcons
+                                    name={expanded === index ? 'expand-less' : 'expand-more'}
+                                    size={24}
+                                    color="#444"
+                                />
+                            </TouchableOpacity>
+                            {expanded === index && (
+                                <View style={styles.accordionContent}>
+                                    <Text style={styles.label}>Beschrijving:</Text>
+                                    <Text style={styles.text}>{entry.description}</Text>
 
-                <View style={styles.contentSection}>
-                    <Text style={styles.label}>Beschrijving:</Text>
-                    <Text style={styles.text}>{entry.description}</Text>
-                </View>
-
-                {/*{entry.sub_images && entry.sub_images.length > 0 && (*/}
-                {/*    <View style={styles.contentSection}>*/}
-                {/*        <Text style={styles.label}>Foto's:</Text>*/}
-                {/*        <View style={styles.insectContent}>*/}
-                {/*            {entry.sub_images.map((insect, index) => (*/}
-                {/*                <Image*/}
-                {/*                    key={index}*/}
-                {/*                    source={{uri: insect}}*/}
-                {/*                    style={styles.insectImage}*/}
-                {/*                />*/}
-                {/*            ))}*/}
-                {/*        </View>*/}
-                {/*    </View>*/}
-                {/*)}*/}
-
-                <View style={styles.contentSection}>
-                    <Text style={styles.label}>Extra informatie:</Text>
-                    <Text style={styles.text}>{entry.information}</Text>
-                </View>
-
-                {/*<View style={styles.contentSection}>*/}
-                {/*    <Text style={styles.label}>Bronnen:</Text>*/}
-                {/*    <Text>Dit moet nog in de database gezet worden</Text>*/}
-                {/*</View>*/}
-
+                                    <Text style={styles.label}>Extra informatie:</Text>
+                                    <Text style={styles.text}>{entry.information}</Text>
+                                </View>
+                            )}
+                        </View>
+                    ))
+                )}
             </ScrollView>
 
             <AppNavigator />
@@ -143,48 +132,45 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#222',
     },
-    content: {
+    subcategoryDescription: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginHorizontal: 20,
+        marginBottom: 10,
+        marginTop: 5,
+    },
+    container: {
         padding: 20,
-        flexDirection: "column",
-        alignItems: 'center',
     },
-    contentSection: {
-        flexDirection: "column",
-        alignItems: "center",
-        paddingBottom: 15,
-        borderBottomWidth: 2,
-        borderColor: '#291700',
+    accordionItem: {
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
+        backgroundColor: '#f9f9f9',
     },
-    titleImage: {
-        width: 150,
-        height: 150,
+    accordionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 14,
     },
-    label: {
+    accordionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        marginTop: 16,
+        color: '#333',
+    },
+    accordionContent: {
+        paddingHorizontal: 14,
+        paddingBottom: 12,
+    },
+    label: {
+        fontWeight: 'bold',
+        marginTop: 10,
         color: '#444',
-        alignSelf: "center",
     },
     text: {
-        fontSize: 15,
-        lineHeight: 22,
-        color: '#333',
-        marginTop: 4,
-        textAlign: "center",
-    },
-    insectContent: {
-        flexDirection: "row",
-        alignItems: "center"
-    },
-    insectImage: {
-        margin: 10,
-        height: 100,
-        width: 100,
-    },
-    loader: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        color: '#555',
+        lineHeight: 20,
     },
 });
