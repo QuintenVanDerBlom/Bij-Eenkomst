@@ -1,13 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    SafeAreaView,
-    ScrollView,
-    TouchableOpacity,
-    ActivityIndicator,
-} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
@@ -16,39 +9,42 @@ import AppNavigator from '../navigation/AppNavigator';
 export default function SubDetailScreen() {
     const route = useRoute();
     const navigation = useNavigation();
-    const { id } = route.params;  // Nu alleen id
-
-    const [data, setData] = useState(null);
+    const { id } = route.params
+    const [entry, setEntry] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        async function fetchData() {
+        async function fetchEntry() {
             try {
-                const response = await fetch(`http://145.137.59.228:5000/api/entries/${id}`);
-                const json = await response.json();
-                setData(json);
+                const response = await fetch(`http://145.24.223.126:5000/api/entries/${id}`);
+                const data = await response.json();
+
+                setEntry(data);
+                setLoading(false);
+
             } catch (error) {
-                console.error('Error fetching subinfo:', error);
-            } finally {
+                console.error('Error fetching entries:', error);
+                setEntry([]);
                 setLoading(false);
             }
         }
-        fetchData();
+
+        fetchEntry();
     }, [id]);
+
+    const imageMap = {
+        Zonnebloem: require('../assets/sunflower.png'),
+        Lavendel: require('../assets/lavender.png'),
+        Klaproos: require('../assets/rose.png'),
+        Bij: require('../assets/bee.png'),
+        Vlinder: require('../assets/bee.png')
+    };
 
     if (loading) {
         return (
-            <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={styles.loader}>
                 <ActivityIndicator size="large" color="#ffdd00" />
-            </SafeAreaView>
-        );
-    }
-
-    if (!data) {
-        return (
-            <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Geen informatie gevonden.</Text>
-            </SafeAreaView>
+            </View>
         );
     }
 
@@ -60,15 +56,46 @@ export default function SubDetailScreen() {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <MaterialIcons name="arrow-back" size={28} color="#444" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>{data.title}</Text>
+                <Text style={styles.headerTitle}>{entry.title}</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
-                <Text style={styles.label}>Beschrijving:</Text>
-                <Text style={styles.text}>{data.description}</Text>
 
-                <Text style={styles.label}>Extra informatie:</Text>
-                <Text style={styles.text}>{data.extraDetails || 'Geen extra informatie beschikbaar.'}</Text>
+                <Image
+                    source={imageMap[entry.title] || require('../assets/bee.png')}
+                    style={styles.titleImage}
+                />
+
+                <View style={styles.contentSection}>
+                    <Text style={styles.label}>Beschrijving:</Text>
+                    <Text style={styles.text}>{entry.description}</Text>
+                </View>
+
+                {entry.sub_images && entry.sub_images.length > 0 && (
+                    <View style={styles.contentSection}>
+                        <Text style={styles.label}>Foto's:</Text>
+                        <View style={styles.insectContent}>
+                            {entry.sub_images.map((insect, index) => (
+                                <Image
+                                    key={index}
+                                    source={{uri: insect}}
+                                    style={styles.insectImage}
+                                />
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+                <View style={styles.contentSection}>
+                    <Text style={styles.label}>Extra informatie:</Text>
+                    <Text style={styles.text}>{entry.information}</Text>
+                </View>
+
+                {/*<View style={styles.contentSection}>*/}
+                {/*    <Text style={styles.label}>Bronnen:</Text>*/}
+                {/*    <Text>Dit moet nog in de database gezet worden</Text>*/}
+                {/*</View>*/}
+
             </ScrollView>
 
             <AppNavigator />
@@ -97,17 +124,46 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
+        flexDirection: "column",
+        alignItems: 'center',
+    },
+    contentSection: {
+        flexDirection: "column",
+        alignItems: "center",
+        paddingBottom: 15,
+        borderBottomWidth: 2,
+        borderColor: '#291700',
+    },
+    titleImage: {
+        width: 150,
+        height: 150,
     },
     label: {
         fontSize: 16,
         fontWeight: '600',
         marginTop: 16,
         color: '#444',
+        alignSelf: "center",
     },
     text: {
         fontSize: 15,
         lineHeight: 22,
         color: '#333',
         marginTop: 4,
+        textAlign: "center",
+    },
+    insectContent: {
+        flexDirection: "row",
+        alignItems: "center"
+    },
+    insectImage: {
+        margin: 10,
+        height: 100,
+        width: 100,
+    },
+    loader: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

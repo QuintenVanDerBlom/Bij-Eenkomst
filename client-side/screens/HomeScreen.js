@@ -5,10 +5,10 @@ import {
     ScrollView,
     StyleSheet,
     ImageBackground,
-    SafeAreaView,
     TouchableOpacity,
     Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
 

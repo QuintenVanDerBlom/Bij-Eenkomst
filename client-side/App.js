@@ -8,6 +8,8 @@ import LoginScreen from "./screens/LoginScreen";
 import SubInfoScreen from "./screens/SubInfoScreen";
 // import AdminScreen from "./screens/AdminScreen";
 import TestMarijn from "./screens/TestMarijn";
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
 
 const Stack = createNativeStackNavigator();
 
