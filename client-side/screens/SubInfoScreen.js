@@ -1,44 +1,28 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    SafeAreaView,
+    ScrollView,
+    ActivityIndicator,
+    Image
+} from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig'; // Zorg dat je juiste Firebase-configuratie geïmporteerd is
+import { db } from "../firebaseConfig";
+import {collection, query, where, getDoc, doc} from "firebase/firestore";
 
-
-export default function SubDetailScreen() {
+export default function InfoScreen() {
     const route = useRoute();
     const navigation = useNavigation();
-    const { id } = route.params;  // Nu alleen id
-
-    const [data, setData] = useState(null);
+    const { entryId } = route.params;
+    const [entry, setEntry] = useState(null);
+    const [expanded, setExpanded] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const docRef = doc(db, 'entries', id);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    setData({ id: docSnap.id, ...docSnap.data() });
-                } else {
-                    console.log('Geen document gevonden!');
-                    setData(null);
-                }
-            } catch (error) {
-                console.error('Error fetching subinfo from Firebase:', error);
-                setData(null);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        fetchData();
-    }, [id]);
 
     const imageMap = {
         Zonnebloem: require('../assets/sunflower.png'),
@@ -48,11 +32,40 @@ export default function SubDetailScreen() {
         Vlinder: require('../assets/bee.png')
     };
 
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const docRef = doc(db, 'entries', entryId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    setEntry({ id: docSnap.id, ...docSnap.data() });
+                } else {
+                    setEntry(null);
+                }
+
+                // setEntries(data);
+                // console.log("categoryId", entryId);
+                console.log("entries", entry);
+            } catch (error) {
+                console.error('Error loading entries:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, [entryId]);
+
+    const toggleExpand = (index) => {
+        setExpanded(expanded === index ? null : index);
+    };
+
     if (loading) {
         return (
-            <View style={styles.loader}>
+            <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" color="#ffdd00" />
-            </View>
+            </SafeAreaView>
         );
     }
 
@@ -70,7 +83,7 @@ export default function SubDetailScreen() {
             <ScrollView contentContainerStyle={styles.content}>
 
                 <Image
-                    source={imageMap[entry.title] || require('../assets/bee.png')}
+                    source={imageMap[entry.head_image] || require('../assets/bee.png')}
                     style={styles.titleImage}
                 />
 
@@ -79,20 +92,20 @@ export default function SubDetailScreen() {
                     <Text style={styles.text}>{entry.description}</Text>
                 </View>
 
-                {entry.sub_images && entry.sub_images.length > 0 && (
-                    <View style={styles.contentSection}>
-                        <Text style={styles.label}>Foto's:</Text>
-                        <View style={styles.insectContent}>
-                            {entry.sub_images.map((insect, index) => (
-                                <Image
-                                    key={index}
-                                    source={{uri: insect}}
-                                    style={styles.insectImage}
-                                />
-                            ))}
-                        </View>
-                    </View>
-                )}
+                {/*{entry.sub_images && entry.sub_images.length > 0 && (*/}
+                {/*    <View style={styles.contentSection}>*/}
+                {/*        <Text style={styles.label}>Foto's:</Text>*/}
+                {/*        <View style={styles.insectContent}>*/}
+                {/*            {entry.sub_images.map((insect, index) => (*/}
+                {/*                <Image*/}
+                {/*                    key={index}*/}
+                {/*                    source={{uri: insect}}*/}
+                {/*                    style={styles.insectImage}*/}
+                {/*                />*/}
+                {/*            ))}*/}
+                {/*        </View>*/}
+                {/*    </View>*/}
+                {/*)}*/}
 
                 <View style={styles.contentSection}>
                     <Text style={styles.label}>Extra informatie:</Text>

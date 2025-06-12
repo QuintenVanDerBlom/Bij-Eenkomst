@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { db } from '../firebaseConfig';
-import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
-import { Picker } from '@react-native-picker/picker';
+import React, {useEffect, useState} from 'react';
+import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
+import {db} from '../firebaseConfig';
+import {collection, addDoc, getDocs, deleteDoc, updateDoc, doc} from 'firebase/firestore';
+import {Picker} from '@react-native-picker/picker';
 
 
 export default function FirestoreCRUDPage() {
@@ -19,9 +19,9 @@ export default function FirestoreCRUDPage() {
         name: '',
         description: '',
     });
-    
+
     const handleInputCat = (field, value) => {
-        setformCat({ ...formCat, [field]: value });
+        setformCat({...formCat, [field]: value});
     };
 
     const addCategory = async () => {
@@ -30,7 +30,7 @@ export default function FirestoreCRUDPage() {
             name: formCat.name,
             description: formCat.description,
         });
-        setformCat({ name: '', description: '' });
+        setformCat({name: '', description: ''});
         loadData();
     };
 // Category
@@ -41,7 +41,7 @@ export default function FirestoreCRUDPage() {
     });
 
     const handleInputRol = (field, value) => {
-        setformRol({ ...formRol, [field]: value });
+        setformRol({...formRol, [field]: value});
     };
 
     const addRole = async () => {
@@ -49,7 +49,7 @@ export default function FirestoreCRUDPage() {
         await addDoc(collection(db, 'roles'), {
             name: formRol.name
         });
-        setformCat({ name: '' });
+        setformCat({name: ''});
         loadData();
     };
 
@@ -76,7 +76,7 @@ export default function FirestoreCRUDPage() {
     });
 
     const handleInputSub = (field, value) => {
-        setformSub({ ...formSub, [field]: value });
+        setformSub({...formSub, [field]: value});
     };
 
     const addSubCategory = async () => {
@@ -87,7 +87,7 @@ export default function FirestoreCRUDPage() {
             description: formSub.description,
         });
 
-        setformSub({ category_id: '', name: '', description: '' });
+        setformSub({category_id: '', name: '', description: ''});
         loadData();
     };
 // Category
@@ -102,7 +102,7 @@ export default function FirestoreCRUDPage() {
     });
 
     const handleInputUser = (field, value) => {
-        setFormUser({ ...formUser, [field]: value });
+        setFormUser({...formUser, [field]: value});
     };
 
     const addUser = async () => {
@@ -115,7 +115,7 @@ export default function FirestoreCRUDPage() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         });
-        setFormUser({ full_name: '', mail_adress: '', password: '', role_id: '' });
+        setFormUser({full_name: '', mail_adress: '', password: '', role_id: ''});
         loadData();
     };
 // Users
@@ -130,7 +130,7 @@ export default function FirestoreCRUDPage() {
     });
 
     const handleInputLocation = (field, value) => {
-        setFormLocation({ ...formLocation, [field]: value });
+        setFormLocation({...formLocation, [field]: value});
     };
 
     const addLocation = async () => {
@@ -142,7 +142,7 @@ export default function FirestoreCRUDPage() {
             longitude: parseFloat(formLocation.longitude),
             description: formLocation.description,
         });
-        setFormLocation({ user_id: '', name: '', latitude: '', longitude: '', description: '' });
+        setFormLocation({user_id: '', name: '', latitude: '', longitude: '', description: ''});
         loadData();
     };
 // Locations
@@ -161,11 +161,21 @@ export default function FirestoreCRUDPage() {
     });
 
     const handleInputEntry = (field, value) => {
-        setFormEntry({ ...formEntry, [field]: value });
+        setFormEntry({...formEntry, [field]: value});
     };
 
     const addEntry = async () => {
-        const { category_id, sub_category_id, created_by, title, description, head_image, sub_images, information, linked_categories } = formEntry;
+        const {
+            category_id,
+            sub_category_id,
+            created_by,
+            title,
+            description,
+            head_image,
+            sub_images,
+            information,
+            linked_categories
+        } = formEntry;
         if (!category_id || !sub_category_id || !title || !description || !head_image || !information) return;
         await addDoc(collection(db, 'entries'), {
             category_id,
@@ -178,7 +188,17 @@ export default function FirestoreCRUDPage() {
             information,
             linked_categories: linked_categories ? linked_categories.split(',').map(i => i.trim()) : []
         });
-        setFormEntry({ category_id: '', sub_category_id: '', created_by: '', title: '', description: '', head_image: '', sub_images: '', information: '', linked_categories: [] });
+        setFormEntry({
+            category_id: '',
+            sub_category_id: '',
+            created_by: '',
+            title: '',
+            description: '',
+            head_image: '',
+            sub_images: '',
+            information: '',
+            linked_categories: []
+        });
         loadData();
     };
 
@@ -187,7 +207,7 @@ export default function FirestoreCRUDPage() {
     const loadData = async () => {
         const fetchCollection = async (name, setter) => {
             const querySnapshot = await getDocs(collection(db, name));
-            const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const data = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
             setter(data);
         };
 
@@ -204,10 +224,9 @@ export default function FirestoreCRUDPage() {
     }, []);
 
 
-
     return (
         <ScrollView contentContainerStyle={styles.container}>
-{/*Category*/}
+            {/*Category*/}
             <Text style={styles.header}>Voeg categorie toe</Text>
             <TextInput
                 placeholder="Naam"
@@ -224,8 +243,8 @@ export default function FirestoreCRUDPage() {
             <TouchableOpacity onPress={addCategory} style={styles.button}>
                 <Text style={styles.buttonText}>Toevoegen</Text>
             </TouchableOpacity>
-{/*Category*/}
-{/*Role*/}
+            {/*Category*/}
+            {/*Role*/}
             <Text style={styles.header}>Voeg role toe</Text>
             <TextInput
                 placeholder="Naam"
@@ -237,8 +256,8 @@ export default function FirestoreCRUDPage() {
             <TouchableOpacity onPress={addRole} style={styles.button}>
                 <Text style={styles.buttonText}>Toevoegen</Text>
             </TouchableOpacity>
-{/*Role*/}
-{/*SubCategory*/}
+            {/*Role*/}
+            {/*SubCategory*/}
             <Text style={styles.header}>Voeg subCategorie toe</Text>
 
             <Picker
@@ -246,9 +265,9 @@ export default function FirestoreCRUDPage() {
                 onValueChange={(value) => handleInputSub('category_id', value)}
                 style={styles.input}
             >
-                <Picker.Item label="Selecteer een categorie" value="" />
+                <Picker.Item label="Selecteer een categorie" value=""/>
                 {categories.map((cat) => (
-                    <Picker.Item key={cat.id} label={cat.name} value={cat.id} />
+                    <Picker.Item key={cat.id} label={cat.name} value={cat.id}/>
                 ))}
             </Picker>
 
@@ -267,8 +286,8 @@ export default function FirestoreCRUDPage() {
             <TouchableOpacity onPress={addSubCategory} style={styles.button}>
                 <Text style={styles.buttonText}>Toevoegen</Text>
             </TouchableOpacity>
-{/*SubCategory*/}
-{/*User*/}
+            {/*SubCategory*/}
+            {/*User*/}
             <Text style={styles.header}>Voeg gebruiker toe</Text>
 
             <TextInput
@@ -296,17 +315,17 @@ export default function FirestoreCRUDPage() {
                 onValueChange={(value) => handleInputUser('role_id', value)}
                 style={styles.input}
             >
-                <Picker.Item label="Selecteer een rol" value="" />
+                <Picker.Item label="Selecteer een rol" value=""/>
                 {roles.map((role) => (
-                    <Picker.Item key={role.id} label={role.name} value={role.id} />
+                    <Picker.Item key={role.id} label={role.name} value={role.id}/>
                 ))}
             </Picker>
 
             <TouchableOpacity onPress={addUser} style={styles.button}>
                 <Text style={styles.buttonText}>Toevoegen</Text>
             </TouchableOpacity>
-{/*User*/}
-{/*Location*/}
+            {/*User*/}
+            {/*Location*/}
 
             <Text style={styles.header}>Voeg locatie toe</Text>
 
@@ -315,9 +334,9 @@ export default function FirestoreCRUDPage() {
                 onValueChange={(value) => handleInputLocation('user_id', value)}
                 style={styles.input}
             >
-                <Picker.Item label="Selecteer gebruiker" value="" />
+                <Picker.Item label="Selecteer gebruiker" value=""/>
                 {users.map((user) => (
-                    <Picker.Item key={user.id} label={user.full_name} value={user.id} />
+                    <Picker.Item key={user.id} label={user.full_name} value={user.id}/>
                 ))}
             </Picker>
 
@@ -352,8 +371,8 @@ export default function FirestoreCRUDPage() {
                 <Text style={styles.buttonText}>Toevoegen</Text>
             </TouchableOpacity>
 
-{/*Location*/}
-{/*Entry*/}
+            {/*Location*/}
+            {/*Entry*/}
 
             <Text style={styles.header}>Voeg entry toe</Text>
 
@@ -362,9 +381,9 @@ export default function FirestoreCRUDPage() {
                 onValueChange={(value) => handleInputEntry('category_id', value)}
                 style={styles.input}
             >
-                <Picker.Item label="Selecteer een categorie" value="" />
+                <Picker.Item label="Selecteer een categorie" value=""/>
                 {categories.map((cat) => (
-                    <Picker.Item key={cat.id} label={cat.name} value={cat.id} />
+                    <Picker.Item key={cat.id} label={cat.name} value={cat.id}/>
                 ))}
             </Picker>
 
@@ -373,9 +392,9 @@ export default function FirestoreCRUDPage() {
                 onValueChange={(value) => handleInputEntry('sub_category_id', value)}
                 style={styles.input}
             >
-                <Picker.Item label="Selecteer een subcategorie" value="" />
+                <Picker.Item label="Selecteer een subcategorie" value=""/>
                 {subcategories.map((sub) => (
-                    <Picker.Item key={sub.id} label={sub.name} value={sub.id} />
+                    <Picker.Item key={sub.id} label={sub.name} value={sub.id}/>
                 ))}
             </Picker>
 
@@ -384,9 +403,9 @@ export default function FirestoreCRUDPage() {
                 onValueChange={(value) => handleInputEntry('created_by', value)}
                 style={styles.input}
             >
-                <Picker.Item label="Gemaakt door (optioneel)" value="" />
+                <Picker.Item label="Gemaakt door (optioneel)" value=""/>
                 {users.map((user) => (
-                    <Picker.Item key={user.id} label={user.full_name} value={user.id} />
+                    <Picker.Item key={user.id} label={user.full_name} value={user.id}/>
                 ))}
             </Picker>
 
@@ -431,17 +450,17 @@ export default function FirestoreCRUDPage() {
                 <Text style={styles.buttonText}>Toevoegen</Text>
             </TouchableOpacity>
 
-{/*Entry*/}
+            {/*Entry*/}
 
             <Text style={styles.header}>Alle gegevens</Text>
 
-            {[{ title: 'Categories', data: categories },
-                { title: 'Roles', data: roles },
-                { title: 'Subcategories', data: subcategories },
-                { title: 'Locations', data: locations },
-                { title: 'Users', data: users },
-                { title: 'Entries', data: entries }
-            ].map(({ title, data }) => (
+            {[{title: 'Categories', data: categories},
+                {title: 'Roles', data: roles},
+                {title: 'Subcategories', data: subcategories},
+                {title: 'Locations', data: locations},
+                {title: 'Users', data: users},
+                {title: 'Entries', data: entries}
+            ].map(({title, data}) => (
                 <View key={title} style={styles.block}>
                     <Text style={styles.blockTitle}>{title}</Text>
                     {data.map((item) => (
@@ -454,12 +473,12 @@ export default function FirestoreCRUDPage() {
 }
 
 const styles = StyleSheet.create({
-    container: { padding: 20 },
-    header: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
-    input: { borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 5 },
-    button: { backgroundColor: 'blue', padding: 10, borderRadius: 5 },
-    buttonText: { color: 'white', textAlign: 'center' },
-    block: { marginVertical: 15 },
-    blockTitle: { fontSize: 18, fontWeight: 'bold' },
-    item: { fontSize: 12, paddingVertical: 2 }
+    container: {padding: 20},
+    header: {fontSize: 20, fontWeight: 'bold', marginVertical: 10},
+    input: {borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 5},
+    button: {backgroundColor: 'blue', padding: 10, borderRadius: 5},
+    buttonText: {color: 'white', textAlign: 'center'},
+    block: {marginVertical: 15},
+    blockTitle: {fontSize: 18, fontWeight: 'bold'},
+    item: {fontSize: 12, paddingVertical: 2}
 });

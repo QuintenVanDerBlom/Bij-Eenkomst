@@ -11,7 +11,7 @@
 export default function InfoScreen() {
     const route = useRoute();
     const navigation = useNavigation();
-    const { categoryId, categoryName } = route.params;
+    const { categoryId } = route.params;
     const [entries, setEntries] = useState([]);
     const [expanded, setExpanded] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -56,7 +56,7 @@ export default function InfoScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.title}>{categoryName}</Text>
+                <Text style={styles.title}></Text>
 
                 {entries[0]?.category_id?.description && (
                     <>
@@ -74,7 +74,7 @@ export default function InfoScreen() {
                     <Text>Geen informatie beschikbaar voor deze categorie.</Text>
                 ) : (
                     entries.map((item, index) => (
-                        <View key={item._id} style={styles.accordionItem}>
+                        <View key={item.id} style={styles.accordionItem}>
                             <TouchableOpacity
                                 style={styles.accordionHeader}
                                 onPress={() => toggleExpand(index)}
@@ -92,7 +92,7 @@ export default function InfoScreen() {
                                     <TouchableOpacity
                                         onPress={() =>
                                             navigation.navigate('SubInfo', {
-                                                id: item._id,
+                                                entryId: item.id,
                                             })
                                         }
                                     >
