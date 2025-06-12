@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { db } from '../firebaseConfig';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import { Picker } from '@react-native-picker/picker';
 
 
@@ -52,6 +52,20 @@ export default function FirestoreCRUDPage() {
         setformCat({ name: '' });
         loadData();
     };
+
+    const updateRole = async (id, newName) => {
+        if (!newName) return;
+        await updateDoc(doc(db, 'roles', id), {
+            name: newName,
+        });
+        loadData();
+    };
+
+    const deleteRole = async (id) => {
+        await deleteDoc(doc(db, 'roles', id));
+        loadData();
+    };
+
 // Role
 
 // SubCategory
@@ -176,6 +190,7 @@ export default function FirestoreCRUDPage() {
             const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setter(data);
         };
+
         fetchCollection('categories', setCategories);
         fetchCollection('roles', setRoles);
         fetchCollection('subcategories', setSubcategories);

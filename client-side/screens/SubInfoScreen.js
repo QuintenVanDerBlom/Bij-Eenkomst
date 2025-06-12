@@ -12,6 +12,9 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig'; // Zorg dat je juiste Firebase-configuratie geïmporteerd is
+
 
 export default function SubDetailScreen() {
     const route = useRoute();
@@ -24,17 +27,26 @@ export default function SubDetailScreen() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const response = await fetch(`http://145.137.59.228:5000/api/entries/${id}`);
-                const json = await response.json();
-                setData(json);
+                const docRef = doc(db, 'entries', id);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    setData({ id: docSnap.id, ...docSnap.data() });
+                } else {
+                    console.log('Geen document gevonden!');
+                    setData(null);
+                }
             } catch (error) {
-                console.error('Error fetching subinfo:', error);
+                console.error('Error fetching subinfo from Firebase:', error);
+                setData(null);
             } finally {
                 setLoading(false);
             }
         }
+
         fetchData();
     }, [id]);
+
 
     if (loading) {
         return (

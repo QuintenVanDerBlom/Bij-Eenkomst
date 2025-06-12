@@ -4,6 +4,8 @@
     import { MaterialIcons } from '@expo/vector-icons';
     import HeaderBar from '../navigation/HeaderBar';
     import AppNavigator from '../navigation/AppNavigator';
+    import {db} from "../firebaseConfig";
+    import { collection, query, where, getDocs } from "firebase/firestore";
 
     export default function InfoScreen() {
         const route = useRoute();
@@ -14,28 +16,20 @@
         const [loading, setLoading] = useState(true);
 
         useEffect(() => {
-            async function fetchEntries() {
+            const loadData = async () => {
                 try {
-                    const response = await fetch(`http://145.137.59.228:5000/api/entries?category_id=${categoryId}`);
-                    const data = await response.json();
-
-                    if (Array.isArray(data)) {
-                        setEntries(data);
-                    } else if (Array.isArray(data.entries)) {
-                        setEntries(data.entries);
-                    } else {
-                        console.warn("Ongeldige API response:", data);
-                        setEntries([]);
-                    }
+                    const q = query(collection(db, 'entries'), where('category_id', '==', categoryId));
+                    const querySnapshot = await getDocs(q);
+                    const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setEntries(data);
                 } catch (error) {
-                    console.error('Error fetching entries:', error);
-                    setEntries([]);
+                    console.error('Error loading entries:', error);
                 } finally {
                     setLoading(false);
                 }
-            }
+            };
 
-            fetchEntries();
+            loadData();
         }, [categoryId]);
 
 
@@ -68,7 +62,7 @@
                         <Text>Geen informatie beschikbaar voor deze categorie.</Text>
                     ) : (
                         entries.map((item, index) => (
-                            <View key={item._id} style={styles.accordionItem}>
+                            <View key={item.id} style={styles.accordionItem}>
                                 <TouchableOpacity
                                     style={styles.accordionHeader}
                                     onPress={() => toggleExpand(index)}
@@ -86,7 +80,7 @@
                                         <TouchableOpacity
                                             onPress={() =>
                                                 navigation.navigate('SubInfo', {
-                                                    id: item._id,
+                                                    id: item.id,
                                                 })
                                             }
                                         >
