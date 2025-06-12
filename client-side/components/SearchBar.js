@@ -80,8 +80,6 @@ export default function SearchBar() {
     };
 
     const getTypeLabel = (entry) => {
-        if (entry.type === 'category') return 'Categorie';
-        if (entry.type === 'subcategory') return 'Subcategorie';
         return 'Informatie-item';
     };
 
