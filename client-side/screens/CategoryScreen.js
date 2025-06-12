@@ -3,10 +3,11 @@ import {
     ScrollView,
     View,
     StyleSheet,
-    SafeAreaView,
     Text,
     TouchableOpacity, TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import CategoryButton from '../components/CategoryCard';
 import AppNavigator from '../navigation/AppNavigator';
 import Searchbar from '../components/SearchBar';
