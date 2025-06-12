@@ -1,37 +1,50 @@
-    import React, { useEffect, useState } from 'react';
-    import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
-    import { SafeAreaView } from 'react-native-safe-area-context';
-    import { useRoute, useNavigation } from '@react-navigation/native';
-    import { MaterialIcons } from '@expo/vector-icons';
-    import HeaderBar from '../navigation/HeaderBar';
-    import AppNavigator from '../navigation/AppNavigator';
-    import {db} from "../firebaseConfig";
-    import { collection, query, where, getDocs } from "firebase/firestore";
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
+import HeaderBar from '../navigation/HeaderBar';
+import AppNavigator from '../navigation/AppNavigator';
+import { db } from "../firebaseConfig";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 
 export default function InfoScreen() {
     const route = useRoute();
     const navigation = useNavigation();
     const { categoryId } = route.params;
+
     const [entries, setEntries] = useState([]);
+    const [category, setCategory] = useState(null);
     const [expanded, setExpanded] = useState(null);
     const [loading, setLoading] = useState(true);
 
-        useEffect(() => {
-            const loadData = async () => {
-                try {
-                    const q = query(collection(db, 'entries'), where('category_id', '==', categoryId));
-                    const querySnapshot = await getDocs(q);
-                    const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setEntries(data);
-                } catch (error) {
-                    console.error('Error loading entries:', error);
-                } finally {
-                    setLoading(false);
-                }
-            };
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                // Load entries
+                const q = query(collection(db, 'entries'), where('category_id', '==', categoryId));
+                const querySnapshot = await getDocs(q);
+                const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setEntries(data);
 
-            loadData();
-        }, [categoryId]);
+                // Load category
+                const categoryRef = doc(db, 'categories', categoryId);
+                const categorySnap = await getDoc(categoryRef);
+                if (categorySnap.exists()) {
+                    setCategory({ id: categorySnap.id, ...categorySnap.data() });
+                } else {
+                    console.warn('Categorie niet gevonden');
+                }
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, [categoryId]);
 
     const toggleExpand = (index) => {
         setExpanded(expanded === index ? null : index);
@@ -56,17 +69,15 @@ export default function InfoScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.title}></Text>
-
-                {entries[0]?.category_id?.description && (
+                {category && (
                     <>
-                        <Text style={styles.categoryDescription}>
-                            {entries[0].category_id.description}
-                        </Text>
-                        <Image
-                            source={require('../assets/bee.png')}
-                            style={styles.image}
-                        />
+                        <Text style={styles.title}>{category.name}</Text>
+                        <Text style={styles.categoryDescription}>{category.description}</Text>
+                        {category.image ? (
+                            <Image source={{ uri: category.image }} style={styles.image} />
+                        ) : (
+                            <Image source={require('../assets/bee.png')} style={styles.image} />
+                        )}
                     </>
                 )}
 
