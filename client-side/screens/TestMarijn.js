@@ -12,6 +12,8 @@ export default function FirestoreCRUDPage() {
     const [locations, setLocations] = useState([]);
     const [users, setUsers] = useState([]);
     const [entries, setEntries] = useState([]);
+    const [blogPosts, setBlogPosts] = useState([]);
+
 
 
 // Category
@@ -204,6 +206,38 @@ export default function FirestoreCRUDPage() {
 
 // Entry
 
+    /// Blogposts
+    const [formBlogPost, setFormBlogPost] = useState({
+        user_id: '',
+        title: '',
+        location_id: '',
+        content: '',
+        images: ''
+    });
+
+    const handleInputBlogPost = (field, value) => {
+        setFormBlogPost({...formBlogPost, [field]: value});
+    };
+
+    const addBlogPost = async () => {
+        const { user_id, title, location_id, content, images } = formBlogPost;
+        if (!user_id || !title || !content) return;
+
+        await addDoc(collection(db, 'blogposts'), {
+            user_id,
+            title,
+            location_id: location_id || null,
+            content,
+            images: images ? images.split(',').map(i => i.trim()) : [],
+            created_at: new Date().toISOString()
+        });
+
+        setFormBlogPost({ user_id: '', title: '', location_id: '', content: '', images: '' });
+        loadData();
+    };
+
+    /// Blogposts
+
     const loadData = async () => {
         const fetchCollection = async (name, setter) => {
             const querySnapshot = await getDocs(collection(db, name));
@@ -217,6 +251,8 @@ export default function FirestoreCRUDPage() {
         fetchCollection('locations', setLocations);
         fetchCollection('users', setUsers);
         fetchCollection('entries', setEntries);
+        fetchCollection('blogposts', setBlogPosts);
+
     };
 
     useEffect(() => {
@@ -452,6 +488,58 @@ export default function FirestoreCRUDPage() {
 
             {/*Entry*/}
 
+            {/*Blogpost*/}
+            <Text style={styles.header}>Voeg Blogpost toe</Text>
+
+            <Picker
+                selectedValue={formBlogPost.user_id}
+                onValueChange={(value) => handleInputBlogPost('user_id', value)}
+                style={styles.input}
+            >
+                <Picker.Item label="Selecteer gebruiker" value=""/>
+                {users.map((user) => (
+                    <Picker.Item key={user.id} label={user.full_name} value={user.id}/>
+                ))}
+            </Picker>
+
+            <TextInput
+                placeholder="Titel"
+                value={formBlogPost.title}
+                onChangeText={text => handleInputBlogPost('title', text)}
+                style={styles.input}
+            />
+
+            <Picker
+                selectedValue={formBlogPost.location_id}
+                onValueChange={(value) => handleInputBlogPost('location_id', value)}
+                style={styles.input}
+            >
+                <Picker.Item label="Selecteer locatie (optioneel)" value=""/>
+                {locations.map((loc) => (
+                    <Picker.Item key={loc.id} label={loc.name} value={loc.id}/>
+                ))}
+            </Picker>
+
+            <TextInput
+                placeholder="Content"
+                value={formBlogPost.content}
+                onChangeText={text => handleInputBlogPost('content', text)}
+                style={styles.input}
+            />
+
+            <TextInput
+                placeholder="Afbeeldingen (komma gescheiden, optioneel)"
+                value={formBlogPost.images}
+                onChangeText={text => handleInputBlogPost('images', text)}
+                style={styles.input}
+            />
+
+            <TouchableOpacity onPress={addBlogPost} style={styles.button}>
+                <Text style={styles.buttonText}>Toevoegen</Text>
+            </TouchableOpacity>
+
+
+            {/*Blogpost*/}
             <Text style={styles.header}>Alle gegevens</Text>
 
             {[{title: 'Categories', data: categories},
@@ -459,7 +547,8 @@ export default function FirestoreCRUDPage() {
                 {title: 'Subcategories', data: subcategories},
                 {title: 'Locations', data: locations},
                 {title: 'Users', data: users},
-                {title: 'Entries', data: entries}
+                {title: 'Entries', data: entries},
+                {title: 'Blogposts', data: blogPosts}
             ].map(({title, data}) => (
                 <View key={title} style={styles.block}>
                     <Text style={styles.blockTitle}>{title}</Text>
