@@ -5,10 +5,10 @@ import {
     ScrollView,
     StyleSheet,
     ImageBackground,
-    SafeAreaView,
     TouchableOpacity,
     Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
 
@@ -49,6 +49,10 @@ export default function HomeScreen() {
 
                 <TouchableOpacity onPress={() => navigation.navigate('Login')}>
                     <Text style={styles.loginLink}>Secret Admin login</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.navigate('TestMarijn')}>
+                    <Text style={styles.loginLink}>to Admin page</Text>
                 </TouchableOpacity>
             </View>
 
