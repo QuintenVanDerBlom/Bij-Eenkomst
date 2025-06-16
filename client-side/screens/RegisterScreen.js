@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 
-export default function LoginScreen() {
+export default function RegisterScreen() {
     const navigation = useNavigation();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const handleLogin = async () => {
+    const handleRegister = async () => {
         if (!email || !password) {
             Alert.alert('Let op', 'Vul zowel je e-mailadres als wachtwoord in.');
             return;
@@ -21,29 +21,21 @@ export default function LoginScreen() {
         try {
             setLoading(true);
 
-            // Stap 1: Firebase inloggen
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            // Stap 1: Maak account aan in Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const uid = userCredential.user.uid;
 
-            // Stap 2: Firestore checken op rol
-            const userDocRef = doc(db, 'users', uid);
-            const userDoc = await getDoc(userDocRef);
+            // Stap 2: Sla Firestore data op met rol 'user'
+            await setDoc(doc(db, 'users', uid), {
+                email: email,
+                role: 'user',
+            });
 
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                const role = userData.role;
-
-                if (role === 'admin') {
-                    navigation.navigate('AdminPanel');
-                } else {
-                    navigation.navigate('Home');
-                }
-            } else {
-                Alert.alert('Fout', 'Geen gebruikersgegevens gevonden in Firestore.');
-            }
+            Alert.alert('Succes', 'Account succesvol aangemaakt!');
+            navigation.navigate('Login');
 
         } catch (error) {
-            console.error('Login fout:', error);
+            console.error('Registratiefout:', error);
             Alert.alert('Fout', error.message);
         } finally {
             setLoading(false);
@@ -52,7 +44,7 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Inloggen</Text>
+            <Text style={styles.title}>Registreren</Text>
 
             <TextInput
                 style={styles.input}
@@ -71,11 +63,11 @@ export default function LoginScreen() {
                 secureTextEntry
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+            <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
                 {loading ? (
                     <ActivityIndicator color="#fff" />
                 ) : (
-                    <Text style={styles.buttonText}>Log in</Text>
+                    <Text style={styles.buttonText}>Account aanmaken</Text>
                 )}
             </TouchableOpacity>
         </View>
@@ -104,7 +96,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     button: {
-        backgroundColor: '#4285F4',
+        backgroundColor: '#34A853',
         padding: 14,
         borderRadius: 8,
         alignItems: 'center',
