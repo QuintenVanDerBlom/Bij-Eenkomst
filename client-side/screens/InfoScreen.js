@@ -1,42 +1,49 @@
-    import React, { useEffect, useState } from 'react';
-    import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
-    import { SafeAreaView } from 'react-native-safe-area-context';
-    import { useRoute, useNavigation } from '@react-navigation/native';
-    import { MaterialIcons } from '@expo/vector-icons';
-    import HeaderBar from '../navigation/HeaderBar';
-    import AppNavigator from '../navigation/AppNavigator';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
+import HeaderBar from '../navigation/HeaderBar';
+import AppNavigator from '../navigation/AppNavigator';
+import { db } from "../firebaseConfig";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 
 export default function InfoScreen() {
     const route = useRoute();
     const navigation = useNavigation();
-    const { categoryId, categoryName } = route.params;
+    const { categoryId } = route.params;
+
     const [entries, setEntries] = useState([]);
+    const [category, setCategory] = useState(null);
     const [expanded, setExpanded] = useState(null);
     const [loading, setLoading] = useState(true);
 
-        useEffect(() => {
-            async function fetchEntries() {
-                try {
-                    const response = await fetch(`http://145.24.223.126:5000/api/entries?category_id=${categoryId}`);
-                    const data = await response.json();
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                // Load entries
+                const q = query(collection(db, 'entries'), where('category_id', '==', categoryId));
+                const querySnapshot = await getDocs(q);
+                const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setEntries(data);
 
-                if (Array.isArray(data)) {
-                    setEntries(data);
-                } else if (Array.isArray(data.entries)) {
-                    setEntries(data.entries);
+                // Load category
+                const categoryRef = doc(db, 'categories', categoryId);
+                const categorySnap = await getDoc(categoryRef);
+                if (categorySnap.exists()) {
+                    setCategory({ id: categorySnap.id, ...categorySnap.data() });
                 } else {
-                    console.warn("Ongeldige API response:", data);
-                    setEntries([]);
+                    console.warn('Categorie niet gevonden');
                 }
+
             } catch (error) {
-                console.error('Error fetching entries:', error);
-                setEntries([]);
+                console.error('Error loading data:', error);
             } finally {
                 setLoading(false);
             }
-        }
+        };
 
-        fetchEntries();
+        loadData();
     }, [categoryId]);
 
     const toggleExpand = (index) => {
@@ -62,17 +69,15 @@ export default function InfoScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.title}>{categoryName}</Text>
-
-                {entries[0]?.category_id?.description && (
+                {category && (
                     <>
-                        <Text style={styles.categoryDescription}>
-                            {entries[0].category_id.description}
-                        </Text>
-                        <Image
-                            source={require('../assets/bee.png')}
-                            style={styles.image}
-                        />
+                        <Text style={styles.title}>{category.name}</Text>
+                        <Text style={styles.categoryDescription}>{category.description}</Text>
+                        {category.image ? (
+                            <Image source={{ uri: category.image }} style={styles.image} />
+                        ) : (
+                            <Image source={require('../assets/bee.png')} style={styles.image} />
+                        )}
                     </>
                 )}
 
@@ -80,7 +85,7 @@ export default function InfoScreen() {
                     <Text>Geen informatie beschikbaar voor deze categorie.</Text>
                 ) : (
                     entries.map((item, index) => (
-                        <View key={item._id} style={styles.accordionItem}>
+                        <View key={item.id} style={styles.accordionItem}>
                             <TouchableOpacity
                                 style={styles.accordionHeader}
                                 onPress={() => toggleExpand(index)}
@@ -98,7 +103,7 @@ export default function InfoScreen() {
                                     <TouchableOpacity
                                         onPress={() =>
                                             navigation.navigate('SubInfo', {
-                                                id: item._id,
+                                                entryId: item.id,
                                             })
                                         }
                                     >
