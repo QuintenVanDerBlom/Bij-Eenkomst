@@ -47,7 +47,7 @@ export default function HomeScreen() {
                     Wij zijn studenten en dit is een testplatform. De inhoud is bedoeld voor educatieve doeleinden en kan onvolledig of onjuist zijn.
                 </Text>
 
-                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                     <Text style={styles.loginLink}>Secret Admin login</Text>
                 </TouchableOpacity>
 
