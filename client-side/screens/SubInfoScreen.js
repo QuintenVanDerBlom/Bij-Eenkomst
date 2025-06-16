@@ -6,7 +6,8 @@ import {
     TouchableOpacity,
     SafeAreaView,
     ScrollView,
-    ActivityIndicator
+    ActivityIndicator,
+    Image,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -96,6 +97,14 @@ export default function SubInfoScreen() {
                             </TouchableOpacity>
                             {expanded === index && (
                                 <View style={styles.accordionContent}>
+                                    {entry.head_image ? (
+                                        <Image
+                                            source={{ uri: entry.head_image }}
+                                            style={styles.image}
+                                            resizeMode="contain"  // behoud aspect ratio, hele afbeelding zichtbaar
+                                        />
+                                    ) : null}
+
                                     <Text style={styles.label}>Beschrijving:</Text>
                                     <Text style={styles.text}>{entry.description}</Text>
 
@@ -163,6 +172,13 @@ const styles = StyleSheet.create({
     accordionContent: {
         paddingHorizontal: 14,
         paddingBottom: 12,
+    },
+    image: {
+        width: '100%',
+        maxHeight: 200,
+        borderRadius: 8,
+        marginBottom: 10,
+        resizeMode: 'contain', // dit kan ook via prop, maar hier is het beter als prop
     },
     label: {
         fontWeight: 'bold',

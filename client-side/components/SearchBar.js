@@ -70,9 +70,10 @@ export default function SearchBar() {
         setFilteredEntries(results);
     }, [search, entries]);
 
-    const handlePress = (entry) => {
+    const handlePress = (entries) => {
+        console.log(entries)
         navigation.navigate('SubInfo', {
-            entryId: entry.id,
+            subcategoryId: entries.sub_category_id,
         });
 
         setSearch('');
