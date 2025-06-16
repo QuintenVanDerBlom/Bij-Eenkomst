@@ -9,6 +9,7 @@ import SubInfoScreen from "./screens/SubInfoScreen";
 // import AdminScreen from "./screens/AdminScreen";
 import TestMarijn from "./screens/TestMarijn";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import BlogScreen from "./screens/BlogScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -25,6 +26,7 @@ export default function App() {
                 <Stack.Screen name="SubInfo" component={SubInfoScreen} options={{ title: 'Meer Informatie' }} />
                 {/*<Stack.Screen name="Admin" component={AdminScreen} />*/}
                 <Stack.Screen name="TestMarijn" component={TestMarijn} />
+                <Stack.Screen name={"Blog"} component={BlogScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
