@@ -524,7 +524,9 @@ export default function FirestoreCRUDPage() {
                 placeholder="Content"
                 value={formBlogPost.content}
                 onChangeText={text => handleInputBlogPost('content', text)}
-                style={styles.input}
+                style={[styles.input, { textAlignVertical: 'top' }]}
+                multiline={true}
+                scrollEnabled={true}
             />
 
             <TextInput
@@ -537,9 +539,8 @@ export default function FirestoreCRUDPage() {
             <TouchableOpacity onPress={addBlogPost} style={styles.button}>
                 <Text style={styles.buttonText}>Toevoegen</Text>
             </TouchableOpacity>
-
-
             {/*Blogpost*/}
+
             <Text style={styles.header}>Alle gegevens</Text>
 
             {[{title: 'Categories', data: categories},
