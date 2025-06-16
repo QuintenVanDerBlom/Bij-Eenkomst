@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 const imageMap = {
     Bijen: require('../assets/bee.png'),
@@ -14,18 +16,23 @@ export default function CategoryCard() {
     const [search, setSearch] = useState('');
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const loadCategories = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, 'categories'));
+            const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setCategories(data);
+        } catch (err) {
+            console.error('Fout bij ophalen categorieën:', err);
+            setError('Fout bij ophalen categorieën');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        fetch('http://145.24.223.126:5000/api/categories') // vervang <JOUW-IP-ADRES> met bv. 192.168.1.120
-            .then(res => res.json())
-            .then(data => {
-                setCategories(data);
-                setLoading(false);
-            })
-            .catch(err => {
-                console.error('Fout bij ophalen categorieën:', err);
-                setLoading(false);
-            });
+        loadCategories();
     }, []);
 
     const filteredCategories = categories.filter(c =>
@@ -43,14 +50,13 @@ export default function CategoryCard() {
     return (
         <ScrollView style={styles.scrollView}>
             <View style={styles.grid}>
-                {filteredCategories.map(({ _id, name }) => (
+                {filteredCategories.map(({ id, name }) => (
                     <TouchableOpacity
-                        key={_id}
+                        key={id}
                         style={styles.card}
                         onPress={() =>
                             navigation.navigate('InfoScreen', {
-                                categoryId: _id,
-                                categoryName: name,
+                                categoryId: id,
                             })
                         }
                         activeOpacity={0.7}

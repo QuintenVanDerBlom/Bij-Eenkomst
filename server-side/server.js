@@ -16,6 +16,7 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'API is working!', success: true });
 });
 
+
 // Routes
 const userRoutes = require('./routes/userRoutes');
 const roleRoutes = require('./routes/roleRoutes');
@@ -52,12 +53,16 @@ const startServer = async () => {
     await connectDB();
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
-      console.log(`Test API: http://localhost:${PORT}/api/test`);
+      console.log(`Test API: http://145.24.223.126:${PORT}/api/test`);
     });
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);
   }
 };
+
+app.listen(5000, '0.0.0.0', () => {
+  console.log('Server running op poort 5000 Hi Dirk');
+});
 
 startServer();
