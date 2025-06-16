@@ -3,7 +3,7 @@ import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet} from 'r
 import {db} from '../firebaseConfig';
 import {collection, addDoc, getDocs, deleteDoc, updateDoc, doc} from 'firebase/firestore';
 import {Picker} from '@react-native-picker/picker';
-
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function FirestoreCRUDPage() {
     const [categories, setCategories] = useState([]);
@@ -12,6 +12,19 @@ export default function FirestoreCRUDPage() {
     const [locations, setLocations] = useState([]);
     const [users, setUsers] = useState([]);
     const [entries, setEntries] = useState([]);
+    const [difficultWords, setDifficultWords] = useState([]);
+
+
+    const [editRoleId, setEditRoleId] = useState(null);
+    const [editRoleName, setEditRoleName] = useState('');
+
+    const [expandedSection, setExpandedSection] = useState(null);
+    const [bulkInput, setBulkInput] = useState('');
+
+    const toggleSection = (section) => {
+        setExpandedSection(expandedSection === section ? null : section);
+    };
+
 
 
 // Category
@@ -203,6 +216,65 @@ export default function FirestoreCRUDPage() {
     };
 
 // Entry
+// Words
+
+    const [formDifficultWord, setFormDifficultWord] = useState({
+        name: '',
+        description: ''
+    });
+
+    const handleInputDifficultWord = (field, value) => {
+        setFormDifficultWord({...formDifficultWord, [field]: value});
+    };
+
+    const addDifficultWord = async () => {
+        if (!formDifficultWord.name || !formDifficultWord.description) return;
+        await addDoc(collection(db, 'difficultWords'), {
+            name: formDifficultWord.name,
+            description: formDifficultWord.description,
+        });
+        setFormDifficultWord({name: '', description: ''});
+        loadData();
+    };
+// Words
+
+    const logEntryDetails = () => {
+        entries.forEach((entry, index) => {
+            console.log(`Entry ${index + 1}:`);
+            console.log('Title:', entry.title);
+            console.log('Description:', entry.description);
+            console.log('Information:', entry.information);
+            console.log('--------------------------');
+        });
+    };
+
+    const addDifficultWordsInBulk = async () => {
+        try {
+            const parsed = JSON.parse(bulkInput);
+            if (!Array.isArray(parsed)) {
+                console.error("Input moet een array van arrays zijn");
+                return;
+            }
+
+            const batch = parsed.map(async ([name, description]) => {
+                if (name && description) {
+                    await addDoc(collection(db, 'difficultWords'), {
+                        name,
+                        description
+                    });
+                }
+            });
+
+            await Promise.all(batch);
+            setBulkInput('');
+            loadData();
+            console.log("Moeilijke woorden toegevoegd");
+        } catch (err) {
+            console.error("Ongeldige invoer:", err.message);
+        }
+    };
+
+
 
     const loadData = async () => {
         const fetchCollection = async (name, setter) => {
@@ -217,11 +289,22 @@ export default function FirestoreCRUDPage() {
         fetchCollection('locations', setLocations);
         fetchCollection('users', setUsers);
         fetchCollection('entries', setEntries);
+        fetchCollection('difficultWords', setDifficultWords);
+
     };
 
     useEffect(() => {
         loadData();
     }, []);
+
+    const sections = [
+        { title: 'Categories', data: categories },
+        { title: 'Subcategories', data: subcategories },
+        { title: 'Locations', data: locations },
+        { title: 'Users', data: users },
+        { title: 'Entries', data: entries },
+        { title: 'Difficult Words', data: difficultWords },
+    ];
 
 
     return (
@@ -452,33 +535,171 @@ export default function FirestoreCRUDPage() {
 
             {/*Entry*/}
 
+            {/*Words*/}
+            <Text style={styles.header}>Voeg moeilijk woord toe</Text>
+
+            <TextInput
+                placeholder="Moeilijk woord"
+                value={formDifficultWord.name}
+                onChangeText={text => handleInputDifficultWord('name', text)}
+                style={styles.input}
+            />
+
+            <TextInput
+                placeholder="Beschrijving"
+                value={formDifficultWord.description}
+                onChangeText={text => handleInputDifficultWord('description', text)}
+                style={styles.input}
+            />
+
+            <TouchableOpacity onPress={addDifficultWord} style={styles.button}>
+                <Text style={styles.buttonText}>Toevoegen</Text>
+            </TouchableOpacity>
+
+            {/*Words*/}
+
             <Text style={styles.header}>Alle gegevens</Text>
 
-            {[{title: 'Categories', data: categories},
-                {title: 'Roles', data: roles},
-                {title: 'Subcategories', data: subcategories},
-                {title: 'Locations', data: locations},
-                {title: 'Users', data: users},
-                {title: 'Entries', data: entries}
-            ].map(({title, data}) => (
+            {sections.map(({ title, data }) => (
                 <View key={title} style={styles.block}>
-                    <Text style={styles.blockTitle}>{title}</Text>
-                    {data.map((item) => (
-                        <Text key={item.id} style={styles.item}>{JSON.stringify(item)}</Text>
-                    ))}
+                    <TouchableOpacity
+                        onPress={() => toggleSection(title)}
+                        style={styles.accordionHeader}
+                    >
+                        <Text style={styles.blockTitle}>{title}</Text>
+                        <MaterialIcons
+                            name={expandedSection === title ? 'expand-less' : 'expand-more'}
+                            size={24}
+                            color="#000"
+                        />
+                    </TouchableOpacity>
+                    {expandedSection === title && (
+                        <View style={styles.accordionContent}>
+                            {data.map((item) => (
+                                <Text key={item.id} style={styles.item}>{JSON.stringify(item)}</Text>
+                            ))}
+                        </View>
+                    )}
                 </View>
             ))}
+
+            {/* Aparte rendering voor Roles met edit/delete functionaliteit */}
+            {/* Aparte sectie voor Roles met edit/delete */}
+            <View style={styles.block}>
+                <TouchableOpacity
+                    onPress={() => toggleSection('Roles')}
+                    style={styles.accordionHeader}
+                >
+                    <Text style={styles.blockTitle}>Roles</Text>
+                    <MaterialIcons
+                        name={expandedSection === 'Roles' ? 'expand-less' : 'expand-more'}
+                        size={24}
+                        color="#000"
+                    />
+                </TouchableOpacity>
+                {expandedSection === 'Roles' && (
+                    <View style={styles.accordionContent}>
+                        {roles.map((item) => (
+                            <View key={item.id} style={{ marginBottom: 10 }}>
+                                {editRoleId === item.id ? (
+                                    <>
+                                        <TextInput
+                                            value={editRoleName}
+                                            onChangeText={setEditRoleName}
+                                            style={styles.input}
+                                        />
+                                        <TouchableOpacity
+                                            onPress={async () => {
+                                                await updateRole(item.id, editRoleName);
+                                                setEditRoleId(null);
+                                                setEditRoleName('');
+                                            }}
+                                            style={[styles.button, { marginBottom: 5 }]}
+                                        >
+                                            <Text style={styles.buttonText}>Opslaan</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                setEditRoleId(null);
+                                                setEditRoleName('');
+                                            }}
+                                            style={[styles.button, { backgroundColor: 'grey' }]}
+                                        >
+                                            <Text style={styles.buttonText}>Annuleren</Text>
+                                        </TouchableOpacity>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Text style={styles.item}>{item.name}</Text>
+                                        <View style={{ flexDirection: 'row', marginTop: 5 }}>
+                                            <TouchableOpacity
+                                                onPress={() => {
+                                                    setEditRoleId(item.id);
+                                                    setEditRoleName(item.name);
+                                                }}
+                                                style={[styles.button, { marginRight: 5 }]}
+                                            >
+                                                <Text style={styles.buttonText}>Edit</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                onPress={() => deleteRole(item.id)}
+                                                style={[styles.button, { backgroundColor: 'red' }]}
+                                            >
+                                                <Text style={styles.buttonText}>Delete</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </>
+                                )}
+                            </View>
+                        ))}
+                    </View>
+                )}
+
+                <TouchableOpacity onPress={logEntryDetails} style={styles.button}>
+                    <Text style={styles.buttonText}>Toon Entry Details in Console</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.header}>Voeg meerdere moeilijke woorden toe</Text>
+
+                <TextInput
+                    placeholder='Bijv. [["natuur", "Natuur betekent..."], ["klimaat", "Klimaat betekent..."]]'
+                    value={bulkInput}
+                    onChangeText={text => setBulkInput(text)}
+                    style={[styles.input, { height: 100 }]}
+                    multiline
+                />
+
+                <TouchableOpacity onPress={addDifficultWordsInBulk} style={styles.button}>
+                    <Text style={styles.buttonText}>Voeg meerdere toe</Text>
+                </TouchableOpacity>
+                <Text>...</Text>
+                <Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text><Text>...</Text>
+
+
+
+
+            </View>
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {padding: 20},
-    header: {fontSize: 20, fontWeight: 'bold', marginVertical: 10},
-    input: {borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 5},
-    button: {backgroundColor: 'blue', padding: 10, borderRadius: 5},
-    buttonText: {color: 'white', textAlign: 'center'},
-    block: {marginVertical: 15},
-    blockTitle: {fontSize: 18, fontWeight: 'bold'},
-    item: {fontSize: 12, paddingVertical: 2}
+    container: { padding: 20 },
+    header: { fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
+    input: { borderWidth: 1, padding: 10, marginBottom: 10, borderRadius: 5 },
+    button: { backgroundColor: 'blue', padding: 10, borderRadius: 5 },
+    buttonText: { color: 'white', textAlign: 'center' },
+    block: { marginVertical: 15 },
+    blockTitle: { fontSize: 18, fontWeight: 'bold' },
+    item: { fontSize: 12, paddingVertical: 2 },
+    accordionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 10,
+    },
+    accordionContent: {
+        paddingLeft: 10,
+        paddingTop: 5,
+    },
 });

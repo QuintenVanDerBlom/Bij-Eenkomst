@@ -1,44 +1,71 @@
-import React, { useState } from 'react';
-import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    Alert,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../firebaseConfig';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+import { Picker } from '@react-native-picker/picker';
 
 export default function RegisterScreen() {
     const navigation = useNavigation();
+    const [roles, setRoles] = useState([]);
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [formUser, setFormUser] = useState({
+        full_name: '',
+        mail_adress: '',
+        password: '',
+        role_id: '',
+    });
 
-    const handleRegister = async () => {
-        if (!email || !password) {
-            Alert.alert('Let op', 'Vul zowel je e-mailadres als wachtwoord in.');
+    const handleInputUser = (field, value) => {
+        setFormUser({ ...formUser, [field]: value });
+    };
+
+    const loadRoles = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, 'roles'));
+            const rolesData = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setRoles(rolesData);
+        } catch (error) {
+            Alert.alert('Fout', 'Kan rollen niet laden');
+        }
+    };
+
+    useEffect(() => {
+        loadRoles();
+    }, []);
+
+    const addUser = async () => {
+        const { full_name, mail_adress, password, role_id } = formUser;
+        if (!full_name || !mail_adress || !password || !role_id) {
+            Alert.alert('Fout', 'Vul alle velden in.');
             return;
         }
 
         try {
-            setLoading(true);
-
-            // Stap 1: Maak account aan in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const uid = userCredential.user.uid;
-
-            // Stap 2: Sla Firestore data op met rol 'user'
-            await setDoc(doc(db, 'users', uid), {
-                email: email,
-                role: 'user',
+            await addDoc(collection(db, 'users'), {
+                full_name,
+                mail_adress,
+                password,
+                role_id,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
             });
 
-            Alert.alert('Succes', 'Account succesvol aangemaakt!');
-            navigation.navigate('Login');
-
+            Alert.alert('Succes', 'Gebruiker succesvol geregistreerd!');
+            setFormUser({ full_name: '', mail_adress: '', password: '', role_id: '' });
+            navigation.navigate('Login'); // Of 'Admin' als je direct naar admin wilt
         } catch (error) {
-            console.error('Registratiefout:', error);
-            Alert.alert('Fout', error.message);
-        } finally {
-            setLoading(false);
+            Alert.alert('Fout', 'Gebruiker kon niet worden toegevoegd.');
         }
     };
 
@@ -47,28 +74,40 @@ export default function RegisterScreen() {
             <Text style={styles.title}>Registreren</Text>
 
             <TextInput
+                placeholder="Volledige naam"
+                value={formUser.full_name}
+                onChangeText={text => handleInputUser('full_name', text)}
                 style={styles.input}
-                placeholder="E-mailadres"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
             />
-
             <TextInput
+                placeholder="E-mailadres"
+                value={formUser.mail_adress}
+                onChangeText={text => handleInputUser('mail_adress', text)}
+                keyboardType="email-address"
+                autoCapitalize="none"
                 style={styles.input}
+            />
+            <TextInput
                 placeholder="Wachtwoord"
-                value={password}
-                onChangeText={setPassword}
+                value={formUser.password}
+                onChangeText={text => handleInputUser('password', text)}
                 secureTextEntry
+                style={styles.input}
             />
 
-            <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-                {loading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.buttonText}>Account aanmaken</Text>
-                )}
+            <Picker
+                selectedValue={formUser.role_id}
+                onValueChange={value => handleInputUser('role_id', value)}
+                style={styles.input}
+            >
+                <Picker.Item label="Selecteer een rol" value="" />
+                {roles.map(role => (
+                    <Picker.Item key={role.id} label={role.name} value={role.id} />
+                ))}
+            </Picker>
+
+            <TouchableOpacity onPress={addUser} style={styles.button}>
+                <Text style={styles.buttonText}>Registreer</Text>
             </TouchableOpacity>
         </View>
     );
@@ -82,7 +121,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     title: {
-        fontSize: 32,
+        fontSize: 28,
         marginBottom: 24,
         textAlign: 'center',
         fontWeight: 'bold',
