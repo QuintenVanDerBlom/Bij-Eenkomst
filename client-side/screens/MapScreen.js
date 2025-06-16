@@ -4,8 +4,11 @@ import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
 import { Ionicons } from '@expo/vector-icons';
+import { db } from '../firebaseConfig';
+import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 
-const API_URL = 'http://145.24.223.126:5000/api/locations';
+const beeMarker = require('../assets/bee-marker.png');
+const butterflyMarker = require('../assets/butterfly-marker.png');
 
 export default function MapScreen() {
     const navigation = useNavigation();
@@ -13,6 +16,7 @@ export default function MapScreen() {
     const [newPin, setNewPin] = useState(null);
     const [pinTitle, setPinTitle] = useState('');
     const [pinDescription, setPinDescription] = useState('');
+    const [pinType, setPinType] = useState('bee'); // Default to bee
     const [editingPin, setEditingPin] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState(null);
@@ -24,10 +28,12 @@ export default function MapScreen() {
 
     const fetchLocations = async () => {
         try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error('Failed to fetch locations');
-            const data = await response.json();
-            setPins(data);
+            const querySnapshot = await getDocs(collection(db, 'locations'));
+            const locations = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setPins(locations);
         } catch (error) {
             console.error('Error fetching locations:', error);
             Alert.alert('Error', 'Failed to fetch locations');
@@ -39,6 +45,7 @@ export default function MapScreen() {
         setNewPin({ latitude, longitude });
         setPinTitle('');
         setPinDescription('');
+        setPinType('bee'); // Reset to default
         setCreateModalVisible(true);
     };
 
@@ -49,22 +56,22 @@ export default function MapScreen() {
                     latitude: newPin.latitude,
                     longitude: newPin.longitude,
                     name: pinTitle,
-                    description: pinDescription
+                    description: pinDescription,
+                    type: pinType, // Add type field
+                    user_id: "SOXmjhQBfQMFjJKJlGBKlKF2CJH2"
                 };
 
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(newLocation),
-                });
-                if (!response.ok) throw new Error('Failed to add location');
-                const data = await response.json();
-                setPins(prevPins => [...prevPins, data]);
+                const docRef = await addDoc(collection(db, 'locations'), newLocation);
+                const addedLocation = {
+                    id: docRef.id,
+                    ...newLocation
+                };
+
+                setPins(prevPins => [...prevPins, addedLocation]);
                 setNewPin(null);
                 setPinTitle('');
                 setPinDescription('');
+                setPinType('bee');
                 setCreateModalVisible(false);
             } catch (error) {
                 console.error('Error adding location:', error);
@@ -77,6 +84,7 @@ export default function MapScreen() {
         setNewPin(null);
         setPinTitle('');
         setPinDescription('');
+        setPinType('bee');
         setCreateModalVisible(false);
     };
 
@@ -89,6 +97,7 @@ export default function MapScreen() {
         setEditingPin(selectedLocation);
         setPinTitle(selectedLocation.name);
         setPinDescription(selectedLocation.description || '');
+        setPinType(selectedLocation.type || 'bee');
         setModalVisible(false);
         setSelectedLocation(null);
     };
@@ -97,28 +106,25 @@ export default function MapScreen() {
         if (editingPin && pinTitle) {
             try {
                 const updatedLocation = {
-                    ...editingPin,
+                    latitude: editingPin.latitude,
+                    longitude: editingPin.longitude,
                     name: pinTitle,
-                    description: pinDescription
+                    description: pinDescription,
+                    type: pinType,
+                    user_id: editingPin.user_id
                 };
 
-                const response = await fetch(`${API_URL}/${editingPin._id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(updatedLocation),
-                });
-                if (!response.ok) throw new Error('Failed to update location');
-                const data = await response.json();
+                await updateDoc(doc(db, 'locations', editingPin.id), updatedLocation);
+
                 setPins(prevPins =>
                     prevPins.map(pin =>
-                        pin._id === editingPin._id ? data : pin
+                        pin.id === editingPin.id ? { ...updatedLocation, id: editingPin.id } : pin
                     )
                 );
                 setEditingPin(null);
                 setPinTitle('');
                 setPinDescription('');
+                setPinType('bee');
             } catch (error) {
                 console.error('Error updating location:', error);
                 Alert.alert('Error', 'Failed to update location');
@@ -138,17 +144,12 @@ export default function MapScreen() {
                         style: 'destructive',
                         onPress: async () => {
                             try {
-                                const response = await fetch(`${API_URL}/${editingPin._id}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                });
-                                if (!response.ok) throw new Error('Failed to delete location');
-                                setPins(prevPins => prevPins.filter(pin => pin._id !== editingPin._id));
+                                await deleteDoc(doc(db, 'locations', editingPin.id));
+                                setPins(prevPins => prevPins.filter(pin => pin.id !== editingPin.id));
                                 setEditingPin(null);
                                 setPinTitle('');
                                 setPinDescription('');
+                                setPinType('bee');
                             } catch (error) {
                                 console.error('Error deleting location:', error);
                                 Alert.alert('Error', 'Failed to delete location');
@@ -158,6 +159,11 @@ export default function MapScreen() {
                 ]
             );
         }
+    };
+
+    // Function to get the appropriate marker image
+    const getMarkerImage = (type) => {
+        return type === 'butterfly' ? butterflyMarker : beeMarker;
     };
 
     return (
@@ -183,19 +189,28 @@ export default function MapScreen() {
             >
                 {pins.map((pin) => (
                     <Marker
-                        key={pin._id}
+                        key={pin.id}
                         coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
                         title={pin.name}
                         onPress={() => handlePinPress(pin)}
-                    />
+                    >
+                        <Image
+                            source={getMarkerImage(pin.type)}
+                            style={styles.markerImage}
+                        />
+                    </Marker>
                 ))}
                 {newPin && (
                     <Marker
                         key="new-pin"
                         coordinate={newPin}
                         title="Nieuwe locatie"
-                        pinColor="blue"
-                    />
+                    >
+                        <Image
+                            source={getMarkerImage(pinType)}
+                            style={styles.markerImage}
+                        />
+                    </Marker>
                 )}
             </MapView>
 
@@ -220,6 +235,7 @@ export default function MapScreen() {
                                         setEditingPin(null);
                                         setPinTitle('');
                                         setPinDescription('');
+                                        setPinType('bee');
                                     }}
                                 >
                                     <Ionicons name="close" size={24} color="#666" />
@@ -261,6 +277,42 @@ export default function MapScreen() {
                                                     multiline
                                                     numberOfLines={4}
                                                 />
+                                            </View>
+                                        </View>
+
+                                        {/* Type selector */}
+                                        <View style={styles.detailRow}>
+                                            <View style={styles.detailIconContainer}>
+                                                <Ionicons name="options-outline" size={20} color="#291700" />
+                                            </View>
+                                            <View style={styles.detailTextContainer}>
+                                                <Text style={styles.detailLabel}>Type</Text>
+                                                <View style={styles.typeSelector}>
+                                                    <TouchableOpacity
+                                                        style={[
+                                                            styles.typeButton,
+                                                            pinType === 'bee' && styles.typeButtonActive
+                                                        ]}
+                                                        onPress={() => setPinType('bee')}
+                                                    >
+                                                        <Text style={[
+                                                            styles.typeButtonText,
+                                                            pinType === 'bee' && styles.typeButtonTextActive
+                                                        ]}>🐝 Bij</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={[
+                                                            styles.typeButton,
+                                                            pinType === 'butterfly' && styles.typeButtonActive
+                                                        ]}
+                                                        onPress={() => setPinType('butterfly')}
+                                                    >
+                                                        <Text style={[
+                                                            styles.typeButtonText,
+                                                            pinType === 'butterfly' && styles.typeButtonTextActive
+                                                        ]}>🦋 Vlinder</Text>
+                                                    </TouchableOpacity>
+                                                </View>
                                             </View>
                                         </View>
                                     </View>
@@ -360,6 +412,42 @@ export default function MapScreen() {
                                             />
                                         </View>
                                     </View>
+
+                                    {/* Type selector */}
+                                    <View style={styles.detailRow}>
+                                        <View style={styles.detailIconContainer}>
+                                            <Ionicons name="options-outline" size={20} color="#291700" />
+                                        </View>
+                                        <View style={styles.detailTextContainer}>
+                                            <Text style={styles.detailLabel}>Type</Text>
+                                            <View style={styles.typeSelector}>
+                                                <TouchableOpacity
+                                                    style={[
+                                                        styles.typeButton,
+                                                        pinType === 'bee' && styles.typeButtonActive
+                                                    ]}
+                                                    onPress={() => setPinType('bee')}
+                                                >
+                                                    <Text style={[
+                                                        styles.typeButtonText,
+                                                        pinType === 'bee' && styles.typeButtonTextActive
+                                                    ]}>🐝 Bij</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={[
+                                                        styles.typeButton,
+                                                        pinType === 'butterfly' && styles.typeButtonActive
+                                                    ]}
+                                                    onPress={() => setPinType('butterfly')}
+                                                >
+                                                    <Text style={[
+                                                        styles.typeButtonText,
+                                                        pinType === 'butterfly' && styles.typeButtonTextActive
+                                                    ]}>🦋 Vlinder</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    </View>
                                 </View>
                             </ScrollView>
 
@@ -414,6 +502,20 @@ export default function MapScreen() {
                                     </View>
                                 </View>
 
+                                {selectedLocation?.type && (
+                                    <View style={styles.detailRow}>
+                                        <View style={styles.detailIconContainer}>
+                                            <Ionicons name="options-outline" size={20} color="#291700" />
+                                        </View>
+                                        <View style={styles.detailTextContainer}>
+                                            <Text style={styles.detailLabel}>Type</Text>
+                                            <Text style={styles.detailValue}>
+                                                {selectedLocation.type === 'butterfly' ? '🦋 Vlinder' : '🐝 Bij'}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                )}
+
                                 {selectedLocation?.description && (
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
@@ -432,8 +534,8 @@ export default function MapScreen() {
                                             <Ionicons name="person-outline" size={20} color="#291700" />
                                         </View>
                                         <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Eigenaar</Text>
-                                            <Text style={styles.detailValue}>{selectedLocation.user_id.full_name}</Text>
+                                            <Text style={styles.detailLabel}>Eigenaar ID</Text>
+                                            <Text style={styles.detailValue}>{selectedLocation.user_id}</Text>
                                         </View>
                                     </View>
                                 )}
@@ -488,8 +590,43 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
     },
+    // Custom marker image style
+    markerImage: {
+        width: 40,
+        height: 40,
+        resizeMode: 'contain',
+    },
     modalKeyboardAvoidingView: {
         flex: 1,
+    },
+    // Type selector styles
+    typeSelector: {
+        flexDirection: 'row',
+        marginTop: 8,
+        gap: 8,
+    },
+    typeButton: {
+        flex: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        backgroundColor: '#f9f9f9',
+        alignItems: 'center',
+    },
+    typeButtonActive: {
+        backgroundColor: '#FFD700',
+        borderColor: '#FFD700',
+    },
+    typeButtonText: {
+        fontSize: 16,
+        color: '#666',
+        fontWeight: '500',
+    },
+    typeButtonTextActive: {
+        color: '#000',
+        fontWeight: '600',
     },
     // Modern modal styles - consistent across all modals
     modernModalOverlay: {
@@ -541,7 +678,7 @@ const styles = StyleSheet.create({
     },
     detailRow: {
         flexDirection: 'row',
-        alignItems: 'center', // Changed from 'flex-start' to 'center' for better alignment
+        alignItems: 'center',
         marginBottom: 25,
         paddingVertical: 6,
     },
@@ -553,11 +690,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 18,
-        marginTop: 0, // Ensure no extra margin that could cause misalignment
+        marginTop: 0,
     },
     detailTextContainer: {
         flex: 1,
-        justifyContent: 'center', // Added to center content vertically
+        justifyContent: 'center',
     },
     detailLabel: {
         fontSize: 15,
@@ -580,7 +717,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         backgroundColor: '#f9f9f9',
         marginTop: 4,
-        minHeight: 44, // Added consistent height for better alignment
+        minHeight: 44,
     },
     modernTextArea: {
         height: 100,
