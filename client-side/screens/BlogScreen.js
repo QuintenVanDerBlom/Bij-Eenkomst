@@ -12,17 +12,37 @@ export default function BlogScreen() {
     const route = useRoute();
     const navigation = useNavigation();
     const [posts, setPosts] = useState([]);
+    const [users, setUsers] = useState([]);
     const [expandedPosts, setExpandedPosts] = useState({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const q = query(collection(db, 'blogposts'));
-                const querySnapshot = await getDocs(q);
-                const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setPosts(data);
+                const postsQuery = query(collection(db, 'blogposts'));
+                const postsSnapshot = await getDocs(postsQuery);
 
+                const postsData = await Promise.all(
+                    postsSnapshot.docs.map(async (docSnap) => {
+                        const post = { id: docSnap.id, ...docSnap.data() };
+                        let username = 'Unknown';
+
+                        if (post.user_id) {
+                            try {
+                                const userDoc = await getDoc(doc(db, 'users', post.user_id));
+                                if (userDoc.exists()) {
+                                    username = userDoc.data().full_name || 'Unknown';
+                                }
+                            } catch (e) {
+                                console.warn("Failed to fetch user:", e);
+                            }
+                        }
+                        console.log(`Post ID: ${post.id}, user_id: ${post.user_id}`);
+                        return { ...post, username };
+                    })
+                );
+
+                setPosts(postsData);
             } catch (error) {
                 console.error('Error loading data:', error);
             } finally {
@@ -32,6 +52,7 @@ export default function BlogScreen() {
 
         loadData();
     }, []);
+
 
     const toggleExpand = (id) => {
         setExpandedPosts(prev => ({
@@ -74,6 +95,7 @@ export default function BlogScreen() {
                                 />
                             )}
                             <Text style={styles.postTitle}>{post.title}</Text>
+                            <Text style={styles.postAuthor}>By {post.username}</Text>
                             <Text style={styles.postContent}>{displayedText}</Text>
 
                             {shouldTruncate && (
@@ -115,6 +137,7 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
+        paddingBottom: 100,
         marginBottom: 50,
         flexDirection: "column",
         alignItems: 'center',
@@ -130,7 +153,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
         borderRadius: 10,
         padding: 10,
-        shadowColor: '#000',
+        shadowColor: '#291700',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -145,6 +168,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#555',
         marginTop: 4
+    },
+    expandText: {
+        color: '#785C82',
+        marginTop: 5,
+        fontWeight: '600',
+    },
+    postAuthor: {
+        fontSize: 12,
+        fontStyle: 'italic',
+        color: '#666',
+        marginTop: 2,
     }
+
 
 });
