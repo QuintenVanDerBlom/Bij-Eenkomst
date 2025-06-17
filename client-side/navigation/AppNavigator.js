@@ -19,6 +19,10 @@ export default function AppNavigator() {
             <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Map')}>
                 <Icon name="map-pin" size={32} color="#000" />
             </TouchableOpacity>
+
+            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('LocationsList')}>
+                <Icon name="list" size={32} color="#000" />
+            </TouchableOpacity>
         </View>
     );
 }
@@ -39,7 +43,7 @@ const styles = StyleSheet.create({
         zIndex: 999,
     },
     navItem: {
-        flex: 1, // zorgt dat elke knop 1/3 inneemt
+        flex: 1, // zorgt dat elke knop 1/4 inneemt nu
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',

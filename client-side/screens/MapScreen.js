@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert, Modal, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
@@ -10,8 +10,11 @@ import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase
 const beeMarker = require('../assets/bee-marker.png');
 const butterflyMarker = require('../assets/butterfly-marker.png');
 
-export default function MapScreen() {
+export default function MapScreen({ route }) {
     const navigation = useNavigation();
+    const { focusLocation } = route.params || {};
+    const mapRef = useRef(null);
+
     const [pins, setPins] = useState([]);
     const [newPin, setNewPin] = useState(null);
     const [pinTitle, setPinTitle] = useState('');
@@ -25,6 +28,21 @@ export default function MapScreen() {
     useEffect(() => {
         fetchLocations();
     }, []);
+
+    // Focus op de geselecteerde locatie wanneer deze wordt doorgegeven
+    useEffect(() => {
+        if (focusLocation && mapRef.current) {
+            // Focus op de geselecteerde locatie
+            setTimeout(() => {
+                mapRef.current.animateToRegion({
+                    latitude: focusLocation.latitude,
+                    longitude: focusLocation.longitude,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                }, 1000);
+            }, 500);
+        }
+    }, [focusLocation]);
 
     const fetchLocations = async () => {
         try {
@@ -178,10 +196,11 @@ export default function MapScreen() {
 
             {/* Map */}
             <MapView
+                ref={mapRef}
                 style={styles.map}
                 initialRegion={{
-                    latitude: 51.9225,
-                    longitude: 4.47917,
+                    latitude: focusLocation?.latitude || 51.9225,
+                    longitude: focusLocation?.longitude || 4.47917,
                     latitudeDelta: 0.01,
                     longitudeDelta: 0.01,
                 }}
@@ -193,11 +212,15 @@ export default function MapScreen() {
                         coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
                         title={pin.name}
                         onPress={() => handlePinPress(pin)}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        centerOffset={{ x: 0, y: 0 }}
                     >
-                        <Image
-                            source={getMarkerImage(pin.type)}
-                            style={styles.markerImage}
-                        />
+                        <View style={styles.markerContainer}>
+                            <Image
+                                source={getMarkerImage(pin.type)}
+                                style={styles.markerImage}
+                            />
+                        </View>
                     </Marker>
                 ))}
                 {newPin && (
@@ -205,11 +228,15 @@ export default function MapScreen() {
                         key="new-pin"
                         coordinate={newPin}
                         title="Nieuwe locatie"
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        centerOffset={{ x: 0, y: 0 }}
                     >
-                        <Image
-                            source={getMarkerImage(pinType)}
-                            style={styles.markerImage}
-                        />
+                        <View style={styles.markerContainer}>
+                            <Image
+                                source={getMarkerImage(pinType)}
+                                style={styles.markerImage}
+                            />
+                        </View>
                     </Marker>
                 )}
             </MapView>
@@ -590,7 +617,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
     },
-    // Custom marker image style
+    // Custom marker container and image - TERUG NAAR ORIGINELE GROOTTE
+    markerContainer: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'visible',
+    },
     markerImage: {
         width: 40,
         height: 40,
