@@ -1,76 +1,198 @@
 import React, { useState } from 'react';
-import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,} from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    SafeAreaView,
+    Alert,
+    ActivityIndicator,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 
 export default function RegisterScreen() {
     const navigation = useNavigation();
-
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [formData, setFormData] = useState({
+        full_name: '',
+        mail_address: '',
+        password: '',
+        confirmPassword: '',
+    });
     const [loading, setLoading] = useState(false);
+    const [roles, setRoles] = useState([]);
 
-    const handleRegister = async () => {
-        if (!email || !password) {
-            Alert.alert('Let op', 'Vul zowel je e-mailadres als wachtwoord in.');
-            return;
+    // Get default user role
+    const getDefaultRole = async () => {
+        try {
+            const q = query(collection(db, 'roles'), where('name', '==', 'user'));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                return querySnapshot.docs[0].id;
+            }
+            // If no user role exists, create one
+            const roleDoc = await addDoc(collection(db, 'roles'), { name: 'user' });
+            return roleDoc.id;
+        } catch (error) {
+            console.error('Error getting default role:', error);
+            return null;
+        }
+    };
+
+    const handleInputChange = (field, value) => {
+        setFormData({ ...formData, [field]: value });
+    };
+
+    const validateForm = () => {
+        const { full_name, mail_address, password, confirmPassword } = formData;
+
+        if (!full_name.trim()) {
+            Alert.alert('Fout', 'Voer je volledige naam in');
+            return false;
         }
 
+        if (!mail_address.trim()) {
+            Alert.alert('Fout', 'Voer je e-mailadres in');
+            return false;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(mail_address)) {
+            Alert.alert('Fout', 'Voer een geldig e-mailadres in');
+            return false;
+        }
+
+        if (password.length < 6) {
+            Alert.alert('Fout', 'Wachtwoord moet minimaal 6 karakters zijn');
+            return false;
+        }
+
+        if (password !== confirmPassword) {
+            Alert.alert('Fout', 'Wachtwoorden komen niet overeen');
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleRegister = async () => {
+        if (!validateForm()) return;
+
+        setLoading(true);
+
         try {
-            setLoading(true);
+            // Create Firebase Auth user
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                formData.mail_address,
+                formData.password
+            );
 
-            // Stap 1: Maak account aan in Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const uid = userCredential.user.uid;
+            // Get default role
+            const defaultRoleId = await getDefaultRole();
 
-            // Stap 2: Sla Firestore data op met rol 'user'
-            await setDoc(doc(db, 'users', uid), {
-                email: email,
-                role: 'user',
+            // Create user document in Firestore
+            await addDoc(collection(db, 'users'), {
+                full_name: formData.full_name,
+                mail_address: formData.mail_address,
+                password: formData.password, // In production, don't store plain text passwords
+                role_id: defaultRoleId,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                firebase_uid: userCredential.user.uid,
             });
 
-            Alert.alert('Succes', 'Account succesvol aangemaakt!');
-            navigation.navigate('Login');
+            Alert.alert(
+                'Registratie Succesvol',
+                'Je account is aangemaakt!',
+                [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+            );
 
         } catch (error) {
-            console.error('Registratiefout:', error);
-            Alert.alert('Fout', error.message);
+            console.error('Registration error:', error);
+            let errorMessage = 'Er is een fout opgetreden bij registratie';
+
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'Dit e-mailadres is al in gebruik';
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = 'Wachtwoord is te zwak';
+            }
+
+            Alert.alert('Registratie Fout', errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Registreren</Text>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <MaterialIcons name="arrow-back" size={24} color="#444" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Registreren</Text>
+                <View />
+            </View>
 
-            <TextInput
-                style={styles.input}
-                placeholder="E-mailadres"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-            />
+            <View style={styles.form}>
+                <Text style={styles.title}>Account Aanmaken</Text>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Wachtwoord"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
+                <TextInput
+                    style={styles.input}
+                    placeholder="Volledige naam"
+                    value={formData.full_name}
+                    onChangeText={(text) => handleInputChange('full_name', text)}
+                    autoCapitalize="words"
+                />
 
-            <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading}>
-                {loading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.buttonText}>Account aanmaken</Text>
-                )}
-            </TouchableOpacity>
-        </View>
+                <TextInput
+                    style={styles.input}
+                    placeholder="E-mailadres"
+                    value={formData.mail_address}
+                    onChangeText={(text) => handleInputChange('mail_address', text)}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
+
+                <TextInput
+                    style={styles.input}
+                    placeholder="Wachtwoord"
+                    value={formData.password}
+                    onChangeText={(text) => handleInputChange('password', text)}
+                    secureTextEntry
+                />
+
+                <TextInput
+                    style={styles.input}
+                    placeholder="Bevestig wachtwoord"
+                    value={formData.confirmPassword}
+                    onChangeText={(text) => handleInputChange('confirmPassword', text)}
+                    secureTextEntry
+                />
+
+                <TouchableOpacity
+                    style={[styles.registerButton, loading && styles.buttonDisabled]}
+                    onPress={handleRegister}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#444" />
+                    ) : (
+                        <Text style={styles.registerButtonText}>Registreren</Text>
+                    )}
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                    <Text style={styles.loginLink}>
+                        Heb je al een account? Inloggen
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
     );
 }
 
@@ -78,32 +200,61 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        padding: 24,
-        justifyContent: 'center',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomColor: '#ddd',
+        borderBottomWidth: 1,
+        justifyContent: 'space-between',
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#444',
+    },
+    form: {
+        flex: 1,
+        paddingHorizontal: 24,
+        paddingTop: 40,
+        justifyContent: 'flex-start',
     },
     title: {
-        fontSize: 32,
-        marginBottom: 24,
-        textAlign: 'center',
+        fontSize: 28,
         fontWeight: 'bold',
+        color: '#444',
+        textAlign: 'center',
+        marginBottom: 40,
     },
     input: {
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
+        paddingHorizontal: 15,
+        paddingVertical: 12,
+        marginBottom: 20,
         fontSize: 16,
     },
-    button: {
-        backgroundColor: '#34A853',
-        padding: 14,
+    registerButton: {
+        backgroundColor: '#ffd700',
+        paddingVertical: 14,
         borderRadius: 8,
         alignItems: 'center',
-        marginTop: 12,
+        marginBottom: 20,
     },
-    buttonText: {
-        color: '#fff',
+    buttonDisabled: {
+        opacity: 0.6,
+    },
+    registerButtonText: {
+        fontWeight: '700',
+        fontSize: 16,
+        color: '#444',
+    },
+    loginLink: {
+        textAlign: 'center',
+        color: '#007BFF',
         fontSize: 16,
     },
 });

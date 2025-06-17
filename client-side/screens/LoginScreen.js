@@ -1,84 +1,148 @@
 import React, { useState } from 'react';
-import {View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator,} from 'react-native';
+import {
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    SafeAreaView,
+    Alert,
+    ActivityIndicator,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 
 export default function LoginScreen() {
     const navigation = useNavigation();
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const getUserData = async (firebaseUid) => {
+        try {
+            const q = query(collection(db, 'users'), where('firebase_uid', '==', firebaseUid));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                return { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+            }
+            return null;
+        } catch (error) {
+            console.error('Error getting user data:', error);
+            return null;
+        }
+    };
+
     const handleLogin = async () => {
-        if (!email || !password) {
-            Alert.alert('Let op', 'Vul zowel je e-mailadres als wachtwoord in.');
+        if (!email.trim() || !password.trim()) {
+            Alert.alert('Fout', 'Vul alle velden in');
             return;
         }
 
+        setLoading(true);
+
         try {
-            setLoading(true);
-
-            // Stap 1: Firebase inloggen
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const uid = userCredential.user.uid;
+            const userData = await getUserData(userCredential.user.uid);
 
-            // Stap 2: Firestore checken op rol
-            const userDocRef = doc(db, 'users', uid);
-            const userDoc = await getDoc(userDocRef);
+            if (userData) {
+                // Check if user is admin
+                const roleQuery = query(collection(db, 'roles'), where('__name__', '==', userData.role_id));
+                const roleSnapshot = await getDocs(roleQuery);
 
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                const role = userData.role;
-
-                if (role === 'admin') {
-                    navigation.navigate('AdminPanel');
-                } else {
-                    navigation.navigate('Home');
+                let isAdmin = false;
+                if (!roleSnapshot.empty) {
+                    const roleData = roleSnapshot.docs[0].data();
+                    isAdmin = roleData.name === 'admin';
                 }
+
+                Alert.alert(
+                    'Inloggen Succesvol',
+                    `Welkom ${userData.full_name}!`,
+                    [{
+                        text: 'OK',
+                        onPress: () => {
+                            if (isAdmin) {
+                                navigation.navigate('AdminScreen');
+                            } else {
+                                navigation.navigate('Home');
+                            }
+                        }
+                    }]
+                );
             } else {
-                Alert.alert('Fout', 'Geen gebruikersgegevens gevonden in Firestore.');
+                Alert.alert('Fout', 'Gebruikersgegevens niet gevonden');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            let errorMessage = 'Er is een fout opgetreden bij inloggen';
+
+            if (error.code === 'auth/user-not-found') {
+                errorMessage = 'Gebruiker niet gevonden';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Onjuist wachtwoord';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'Ongeldig e-mailadres';
             }
 
-        } catch (error) {
-            console.error('Login fout:', error);
-            Alert.alert('Fout', error.message);
+            Alert.alert('Inlog Fout', errorMessage);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Inloggen</Text>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <MaterialIcons name="arrow-back" size={24} color="#444" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Inloggen</Text>
+                <View />
+            </View>
 
-            <TextInput
-                style={styles.input}
-                placeholder="E-mailadres"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-            />
+            <View style={styles.form}>
+                <Text style={styles.title}>Welkom Terug</Text>
 
-            <TextInput
-                style={styles.input}
-                placeholder="Wachtwoord"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-            />
+                <TextInput
+                    style={styles.input}
+                    placeholder="E-mailadres"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                />
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-                {loading ? (
-                    <ActivityIndicator color="#fff" />
-                ) : (
-                    <Text style={styles.buttonText}>Log in</Text>
-                )}
-            </TouchableOpacity>
-        </View>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Wachtwoord"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                />
+
+                <TouchableOpacity
+                    style={[styles.loginButton, loading && styles.buttonDisabled]}
+                    onPress={handleLogin}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color="#444" />
+                    ) : (
+                        <Text style={styles.loginButtonText}>Inloggen</Text>
+                    )}
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                    <Text style={styles.registerLink}>
+                        Nog geen account? Registreren
+                    </Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
     );
 }
 
@@ -86,32 +150,61 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        padding: 24,
-        justifyContent: 'center',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderBottomColor: '#ddd',
+        borderBottomWidth: 1,
+        justifyContent: 'space-between',
+    },
+    headerTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#444',
+    },
+    form: {
+        flex: 1,
+        paddingHorizontal: 24,
+        paddingTop: 40,
+        justifyContent: 'flex-start',
     },
     title: {
-        fontSize: 32,
-        marginBottom: 24,
-        textAlign: 'center',
+        fontSize: 28,
         fontWeight: 'bold',
+        color: '#444',
+        textAlign: 'center',
+        marginBottom: 40,
     },
     input: {
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
+        paddingHorizontal: 15,
+        paddingVertical: 12,
+        marginBottom: 20,
         fontSize: 16,
     },
-    button: {
-        backgroundColor: '#4285F4',
-        padding: 14,
+    loginButton: {
+        backgroundColor: '#ffd700',
+        paddingVertical: 14,
         borderRadius: 8,
         alignItems: 'center',
-        marginTop: 12,
+        marginBottom: 20,
     },
-    buttonText: {
-        color: '#fff',
+    buttonDisabled: {
+        opacity: 0.6,
+    },
+    loginButtonText: {
+        fontWeight: '700',
+        fontSize: 16,
+        color: '#444',
+    },
+    registerLink: {
+        textAlign: 'center',
+        color: '#007BFF',
         fontSize: 16,
     },
 });

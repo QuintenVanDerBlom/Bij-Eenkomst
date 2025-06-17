@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    ScrollView,
-    StyleSheet,
-    ImageBackground,
-    TouchableOpacity,
-    Image,
-} from 'react-native';
+import {View, Text, ScrollView, StyleSheet, ImageBackground, TouchableOpacity, Image,} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
@@ -28,11 +20,28 @@ export default function HomeScreen() {
                 {/* Titel met bij icoon */}
                 <View style={styles.titleRow}>
                     <Image
-                        source={require('../assets/bee.png')} // pas dit pad aan als nodig
+                        source={require('../assets/bee.png')}
                         style={styles.beeIcon}
                         resizeMode="contain"
                     />
                     <Text style={styles.pageTitle}>Bij Eenkomst</Text>
+                </View>
+
+                {/* NIEUW: knoppen direct onder de titel */}
+                <View style={styles.buttonRow}>
+                    <TouchableOpacity
+                        style={styles.loginButton}
+                        onPress={() => navigation.navigate('Login')}
+                    >
+                        <Text style={styles.loginButtonText}>Login</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.registerButton}
+                        onPress={() => navigation.navigate('Register')}
+                    >
+                        <Text style={styles.registerButtonText}>Registreer</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Grote bijenfeitje in het midden */}
@@ -86,6 +95,46 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 2,
     },
+    // ✅ Nieuwe knopstijl
+    buttonRow: {
+        position: 'absolute',
+        top: 110,
+        right: 16,
+        flexDirection: 'row',
+        gap: 8,
+    },
+    loginButton: {
+        backgroundColor: 'yellow',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 99,
+        alignItems: 'center',
+        minWidth: 90,
+        height: 36,
+        justifyContent: 'center',
+    },
+    loginButtonText: {
+        color: 'black',
+        fontWeight: 'bold',
+        fontSize: 13,
+    },
+    registerButton: {
+        backgroundColor: 'black',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 99,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'yellow',
+        minWidth: 90,
+        height: 36,
+        justifyContent: 'center',
+    },
+    registerButtonText: {
+        color: 'yellow',
+        fontWeight: 'bold',
+        fontSize: 13,
+    },
     factContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -108,7 +157,7 @@ const styles = StyleSheet.create({
         padding: 16,
         borderRadius: 20,
         position: 'absolute',
-        bottom: 80,  // ruimte tussen navbar en disclaimer
+        bottom: 80,
         left: '5%',
         right: '5%',
         width: '90%',
