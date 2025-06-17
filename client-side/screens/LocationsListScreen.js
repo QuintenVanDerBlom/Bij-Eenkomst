@@ -1,31 +1,132 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Switch } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import AppNavigator from '../navigation/AppNavigator';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../auth/AuthContext';
+import LikedLocationsService from '../services/LikedLocationsService';
 
 export default function LocationsListScreen() {
     const navigation = useNavigation();
+    const { currentUser } = useAuth();
     const [locations, setLocations] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Start with false to prevent flash
+    const [showFavorites, setShowFavorites] = useState(false);
+    const [favoriteLocationIds, setFavoriteLocationIds] = useState([]);
+    const [initialLoad, setInitialLoad] = useState(true);
 
+    // Pre-load favorite IDs from AsyncStorage on component mount
     useEffect(() => {
-        const fetchLocations = async () => {
-            try {
+        const preloadFavorites = async () => {
+            if (currentUser) {
+                try {
+                    const favIds = await LikedLocationsService.getFavoriteLocations(currentUser.uid);
+                    setFavoriteLocationIds(favIds);
+                } catch (error) {
+                    console.error('Error preloading favorites:', error);
+                }
+            }
+            setInitialLoad(false);
+        };
+        preloadFavorites();
+    }, [currentUser]);
+
+    // Refresh favorites when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            const refreshFavorites = async () => {
+                if (currentUser && showFavorites) {
+                    try {
+                        const favIds = await LikedLocationsService.getFavoriteLocations(currentUser.uid);
+                        setFavoriteLocationIds(favIds);
+                        // Only reload locations if favorites changed
+                        if (JSON.stringify(favIds) !== JSON.stringify(favoriteLocationIds)) {
+                            fetchLocations(true, favIds);
+                        }
+                    } catch (error) {
+                        console.error('Error refreshing favorites:', error);
+                    }
+                }
+            };
+            refreshFavorites();
+        }, [currentUser, showFavorites])
+    );
+
+    const fetchLocations = async (isFavorites = showFavorites, favIds = favoriteLocationIds) => {
+        // Only show loading if we don't have initial data or if it's a significant change
+        if (locations.length === 0 || (isFavorites !== showFavorites)) {
+            setLoading(true);
+        }
+
+        try {
+            if (isFavorites && currentUser) {
+                const favoriteIds = favIds.length > 0 ? favIds : await LikedLocationsService.getFavoriteLocations(currentUser.uid);
+
+                if (favoriteIds.length === 0) {
+                    setLocations([]);
+                    return;
+                }
+
+                // Firestore 'in' query supports max 10 elements, so chunk if needed
+                const chunkSize = 10;
+                let allFavLocations = [];
+                for (let i = 0; i < favoriteIds.length; i += chunkSize) {
+                    const chunk = favoriteIds.slice(i, i + chunkSize);
+                    const q = query(collection(db, 'locations'), where('__name__', 'in', chunk));
+                    const querySnapshot = await getDocs(q);
+                    const locs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    allFavLocations = allFavLocations.concat(locs);
+                }
+                setLocations(allFavLocations);
+            } else {
+                // Show all locations
                 const querySnapshot = await getDocs(collection(db, 'locations'));
                 const locs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setLocations(locs);
-            } catch (error) {
-                console.error('Error fetching locations:', error);
-            } finally {
-                setLoading(false);
             }
-        };
-        fetchLocations();
-    }, []);
+        } catch (error) {
+            console.error('Error fetching locations:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch locations when showFavorites changes or on initial load
+    useEffect(() => {
+        if (!initialLoad) {
+            fetchLocations();
+        }
+    }, [showFavorites, currentUser, initialLoad]);
+
+    // Initial data load after preloading favorites
+    useEffect(() => {
+        if (!initialLoad) {
+            fetchLocations();
+        }
+    }, [initialLoad]);
+
+    const handleToggleFavorites = async (value) => {
+        if (value && !currentUser) {
+            // If user tries to show favorites but isn't logged in
+            navigation.navigate('Login');
+            return;
+        }
+
+        // Pre-load favorites if switching to favorites view
+        if (value && currentUser) {
+            try {
+                const favIds = await LikedLocationsService.getFavoriteLocations(currentUser.uid);
+                setFavoriteLocationIds(favIds);
+            } catch (error) {
+                console.error('Error loading favorites for toggle:', error);
+            }
+        }
+
+        setShowFavorites(value);
+    };
 
     const renderItem = ({ item }) => (
         <TouchableOpacity
@@ -53,17 +154,25 @@ export default function LocationsListScreen() {
                             {item.latitude?.toFixed(4)}, {item.longitude?.toFixed(4)}
                         </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={20} color="#000000" />
+                    <View style={styles.itemActions}>
+                        {showFavorites && (
+                            <Ionicons name="star" size={16} color="#FFD700" style={styles.favoriteIcon} />
+                        )}
+                        <Ionicons name="chevron-forward" size={20} color="#000000" />
+                    </View>
                 </View>
             </LinearGradient>
         </TouchableOpacity>
     );
 
-    if (loading) {
+    // Show loading only if we're in initial load state or actively loading with no data
+    if (initialLoad || (loading && locations.length === 0)) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#FFD700" />
-                <Text style={styles.loadingText}>Locaties laden...</Text>
+                <Text style={styles.loadingText}>
+                    {showFavorites ? 'Favoriete locaties laden...' : 'Locaties laden...'}
+                </Text>
             </View>
         );
     }
@@ -71,8 +180,28 @@ export default function LocationsListScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Alle Locaties</Text>
+                <Text style={styles.headerTitle}>
+                    {showFavorites ? 'Favoriete Locaties' : 'Alle Locaties'}
+                </Text>
+                <View style={styles.switchContainer}>
+                    <Text style={styles.switchLabel}>Favorieten</Text>
+                    <Switch
+                        value={showFavorites}
+                        onValueChange={handleToggleFavorites}
+                        thumbColor={showFavorites ? '#FFD700' : '#f4f3f4'}
+                        trackColor={{ false: '#767577', true: '#ffe066' }}
+                        disabled={!currentUser && showFavorites}
+                    />
+                </View>
             </View>
+
+            {/* Show subtle loading indicator in header when refreshing data */}
+            {loading && locations.length > 0 && (
+                <View style={styles.refreshIndicator}>
+                    <ActivityIndicator size="small" color="#FFD700" />
+                    <Text style={styles.refreshText}>Bijwerken...</Text>
+                </View>
+            )}
 
             <FlatList
                 data={locations}
@@ -80,6 +209,31 @@ export default function LocationsListScreen() {
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                ListEmptyComponent={() => (
+                    <View style={styles.emptyContainer}>
+                        <Ionicons
+                            name={showFavorites ? "star-outline" : "location-outline"}
+                            size={64}
+                            color="#ccc"
+                        />
+                        <Text style={styles.emptyText}>
+                            {showFavorites
+                                ? currentUser
+                                    ? 'Je hebt nog geen favoriete locaties.'
+                                    : 'Log in om je favoriete locaties te bekijken.'
+                                : 'Geen locaties gevonden.'
+                            }
+                        </Text>
+                        {showFavorites && !currentUser && (
+                            <TouchableOpacity
+                                style={styles.loginButton}
+                                onPress={() => navigation.navigate('Login')}
+                            >
+                                <Text style={styles.loginButtonText}>Inloggen</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                )}
             />
 
             {/* Bottom navigation */}
@@ -100,13 +254,38 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#000000',
-        justifyContent: 'center',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     headerTitle: {
         fontSize: 24,
         fontWeight: 'bold',
         color: '#000000',
-        textAlign: 'center',
+        flex: 1,
+    },
+    switchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    switchLabel: {
+        fontSize: 16,
+        color: '#000',
+        fontWeight: '600',
+    },
+    refreshIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 8,
+        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+        gap: 8,
+    },
+    refreshText: {
+        fontSize: 14,
+        color: '#666',
+        fontStyle: 'italic',
     },
     listContent: {
         padding: 16,
@@ -164,6 +343,14 @@ const styles = StyleSheet.create({
         color: '#555555',
         fontFamily: 'monospace',
     },
+    itemActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    favoriteIcon: {
+        marginRight: 4,
+    },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -174,5 +361,31 @@ const styles = StyleSheet.create({
         marginTop: 16,
         fontSize: 16,
         color: '#666',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 50,
+        paddingHorizontal: 32,
+    },
+    emptyText: {
+        fontSize: 18,
+        color: '#666',
+        fontWeight: '600',
+        textAlign: 'center',
+        marginTop: 16,
+        marginBottom: 20,
+    },
+    loginButton: {
+        backgroundColor: '#FFD700',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 8,
+    },
+    loginButtonText: {
+        color: '#291700',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });

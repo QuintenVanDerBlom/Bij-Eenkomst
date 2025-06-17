@@ -19,10 +19,6 @@ export default function AppNavigator() {
             <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Map')}>
                 <Icon name="map-pin" size={32} color="#000" />
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('LocationsList')}>
-                <Icon name="list" size={32} color="#000" />
-            </TouchableOpacity>
         </View>
     );
 }

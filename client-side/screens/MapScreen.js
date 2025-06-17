@@ -186,11 +186,19 @@ export default function MapScreen({ route }) {
 
     return (
         <View style={styles.container}>
-            {/* Header with back button */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            {/* Header with back button and list button */}
+            <View style={styles.headerContainer}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
-                    <Text style={styles.backText}>Terug</Text>
+                    <Text style={styles.headerButtonText}>Terug</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('LocationsList')}
+                    style={[styles.headerButton, styles.listButton]}
+                >
+                    <Ionicons name="list" size={24} color="#333" />
+                    <Text style={styles.headerButtonText}>Lijst</Text>
                 </TouchableOpacity>
             </View>
 
@@ -594,28 +602,39 @@ const styles = StyleSheet.create({
         flex: 1,
         position: 'relative',
     },
-    header: {
+    headerContainer: {
         position: 'absolute',
         top: 40,
         left: 16,
+        right: 16,
         zIndex: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    headerButton: {
         backgroundColor: 'rgba(255,255,255,0.9)',
         borderRadius: 8,
-        padding: 6,
+        padding: 8,
         flexDirection: 'row',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
-    map: {
-        ...StyleSheet.absoluteFillObject,
+    listButton: {
+        backgroundColor: 'rgba(255, 215, 0, 0.9)', // Yellow background for list button
     },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    backText: {
+    headerButtonText: {
         marginLeft: 6,
         fontSize: 16,
         color: '#333',
+        fontWeight: '500',
+    },
+    map: {
+        ...StyleSheet.absoluteFillObject,
     },
     // Custom marker container and image - TERUG NAAR ORIGINELE GROOTTE
     markerContainer: {
