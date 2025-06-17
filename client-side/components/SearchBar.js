@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, StyleSheet, FlatList, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 export default function SearchBar() {
     const [search, setSearch] = useState('');
@@ -8,13 +10,25 @@ export default function SearchBar() {
     const [filteredEntries, setFilteredEntries] = useState([]);
     const navigation = useNavigation();
 
+    // Data ophalen uit Firebase
     useEffect(() => {
-        fetch('http://145.24.223.126:5000/api/entries')
-            .then(res => res.json())
-            .then(data => setEntries(data))
-            .catch(error => console.error('API fetch error:', error));
+        const fetchEntries = async () => {
+            try {
+                const snapshot = await getDocs(collection(db, 'entries'));
+                const data = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+                setEntries(data);
+            } catch (error) {
+                console.error('Firebase fetch error:', error);
+            }
+        };
+
+        fetchEntries();
     }, []);
 
+    // Filter entries wanneer de zoekterm verandert
     useEffect(() => {
         if (!search.trim()) {
             setFilteredEntries([]);
@@ -25,19 +39,12 @@ export default function SearchBar() {
 
         const results = entries
             .map(entry => {
-                // Wat voor soort item is dit?
-                // Ik check eerst of title matches categorie/subcategorie (naam)
-                // Om vervolgens relevance te geven
-
-                // Check categorie match
                 const categoryName = entry.category_id?.name?.toLowerCase() || '';
-                // Check subcategorie match
                 const subCategoryName = entry.sub_category_id?.name?.toLowerCase() || '';
-                // Titel
                 const title = entry.title?.toLowerCase() || '';
 
                 let relevance = 0;
-                let type = 'info'; // default info item
+                let type = 'info';
 
                 if (categoryName === lowerSearch) {
                     relevance = 4;
@@ -46,7 +53,7 @@ export default function SearchBar() {
                     relevance = 3;
                     type = 'subcategory';
                 } else if (title === lowerSearch) {
-                    relevance = 5; // hoogste relevantie op titel precies match
+                    relevance = 5;
                 } else if (
                     title.includes(lowerSearch) ||
                     subCategoryName.includes(lowerSearch) ||
@@ -64,21 +71,15 @@ export default function SearchBar() {
     }, [search, entries]);
 
     const handlePress = (entry) => {
-        // Navigeren afhankelijk van type
-        if (entry.type === 'category') {
-            navigation.navigate('InfoScreen', { id: entry.category_id._id, categoryName: entry.category_id.name });
-        } else {
-            // subcategory of info-item
-            navigation.navigate('SubInfo', { id: entry._id });
-        }
+        navigation.navigate('SubInfo', {
+            entryId: entry.id,
+        });
 
         setSearch('');
         setFilteredEntries([]);
     };
 
     const getTypeLabel = (entry) => {
-        if (entry.type === 'category') return 'Categorie';
-        if (entry.type === 'subcategory') return 'Subcategorie';
         return 'Informatie-item';
     };
 
@@ -94,7 +95,7 @@ export default function SearchBar() {
             {filteredEntries.length > 0 && (
                 <FlatList
                     data={filteredEntries}
-                    keyExtractor={(item) => item._id}
+                    keyExtractor={(item) => item.id}
                     style={styles.suggestionsList}
                     keyboardShouldPersistTaps="handled"
                     renderItem={({ item }) => (
