@@ -24,7 +24,6 @@ export default function RegisterScreen() {
         confirmPassword: '',
     });
     const [loading, setLoading] = useState(false);
-    const [roles, setRoles] = useState([]);
 
     // Get default user role
     const getDefaultRole = async () => {
