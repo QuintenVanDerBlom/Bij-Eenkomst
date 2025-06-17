@@ -1,22 +1,52 @@
 import React, { useEffect, useState } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    SafeAreaView,
-    ScrollView,
-    ActivityIndicator,
-    Image
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Image
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
 import { db } from "../firebaseConfig";
-import {collection, query, where, getDoc, doc} from "firebase/firestore";
+import {collection, query, where, getDoc, doc, getDocs} from "firebase/firestore";
 
 export default function BlogScreen() {
+    const route = useRoute();
+    const navigation = useNavigation();
+    const [posts, setPosts] = useState([]);
+    const [expandedPosts, setExpandedPosts] = useState({});
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const q = query(collection(db, 'blogposts'));
+                const querySnapshot = await getDocs(q);
+                const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setPosts(data);
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, []);
+
+    const toggleExpand = (id) => {
+        setExpandedPosts(prev => ({
+            ...prev,
+            [id]: !prev[id]
+        }));
+    };
+
+    if (loading) {
+        return (
+            <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#ffdd00" />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -27,8 +57,35 @@ export default function BlogScreen() {
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
+                {posts.map((post) => {
+                    const isExpanded = expandedPosts[post.id];
+                    const shouldTruncate = post.content.length > 150;
+                    const displayedText = isExpanded || !shouldTruncate
+                        ? post.content
+                        : post.content.slice(0, 100) + '...';
 
+                    return (
+                        <View key={post.id} style={styles.postContainer}>
+                            {post.imageUrl && (
+                                <Image
+                                    source={{ uri: post.imageUrl }}
+                                    style={{ width: '100%', height: 200, borderRadius: 10 }}
+                                    resizeMode="cover"
+                                />
+                            )}
+                            <Text style={styles.postTitle}>{post.title}</Text>
+                            <Text style={styles.postContent}>{displayedText}</Text>
 
+                            {shouldTruncate && (
+                                <TouchableOpacity onPress={() => toggleExpand(post.id)}>
+                                    <Text style={styles.expandText}>
+                                        {isExpanded ? 'Show less' : 'Read more'}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    );
+                })}
             </ScrollView>
 
             <AppNavigator />
@@ -58,6 +115,7 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
+        marginBottom: 50,
         flexDirection: "column",
         alignItems: 'center',
     },
@@ -66,4 +124,27 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    postContainer: {
+        marginBottom: 20,
+        width: '100%',
+        backgroundColor: '#f9f9f9',
+        borderRadius: 10,
+        padding: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    postTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginTop: 10
+    },
+    postContent: {
+        fontSize: 14,
+        color: '#555',
+        marginTop: 4
+    }
+
 });
