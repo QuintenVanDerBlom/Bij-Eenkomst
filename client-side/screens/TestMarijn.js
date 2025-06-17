@@ -1,8 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image} from 'react-native';
 import {db} from '../firebaseConfig';
 import {collection, addDoc, getDocs, deleteDoc, updateDoc, doc} from 'firebase/firestore';
 import {Picker} from '@react-native-picker/picker';
+
+import * as ImagePicker from 'expo-image-picker';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebaseConfig';
 
 
 export default function FirestoreCRUDPage() {
@@ -13,6 +17,48 @@ export default function FirestoreCRUDPage() {
     const [users, setUsers] = useState([]);
     const [entries, setEntries] = useState([]);
     const [blogPosts, setBlogPosts] = useState([]);
+
+    const pickAndUploadImageForBlog = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 0.5,
+            });
+
+
+            console.log("Result:", result);
+
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                const image = result.assets[0];
+                const response = await fetch(image.uri);
+                const blob = await response.blob();
+
+                const filename = image.uri.substring(image.uri.lastIndexOf('/') + 1);
+                const storageRef = ref(storage, `blogImages/${Date.now()}-${filename}`);
+
+                await uploadBytes(storageRef, blob);
+                const downloadURL = await getDownloadURL(storageRef);
+
+                setFormBlogPost(prev => ({
+                    ...prev,
+                    images: [...prev.images, downloadURL]
+                }));
+            }
+        } catch (err) {
+            console.error("Fout bij kiezen/uploaden:", err);
+        }
+    };
+
+
+    useEffect(() => {
+        (async () => {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                alert('Toegang tot de galerij is nodig om afbeeldingen te kunnen uploaden.');
+            }
+        })();
+    }, []);
 
 
 
@@ -212,7 +258,7 @@ export default function FirestoreCRUDPage() {
         title: '',
         location_id: '',
         content: '',
-        images: ''
+        images: []
     });
 
     const handleInputBlogPost = (field, value) => {
@@ -223,16 +269,18 @@ export default function FirestoreCRUDPage() {
         const { user_id, title, location_id, content, images } = formBlogPost;
         if (!user_id || !title || !content) return;
 
+        console.log("Images before upload:", images);
+
         await addDoc(collection(db, 'blogposts'), {
             user_id,
             title,
             location_id: location_id || null,
             content,
-            images: images ? images.split(',').map(i => i.trim()) : [],
+            images: formBlogPost.images,
             created_at: new Date().toISOString()
         });
 
-        setFormBlogPost({ user_id: '', title: '', location_id: '', content: '', images: '' });
+        setFormBlogPost({ user_id: '', title: '', location_id: '', content: '', images: [] });
         loadData();
     };
 
@@ -529,12 +577,37 @@ export default function FirestoreCRUDPage() {
                 scrollEnabled={true}
             />
 
-            <TextInput
-                placeholder="Afbeeldingen (komma gescheiden, optioneel)"
-                value={formBlogPost.images}
-                onChangeText={text => handleInputBlogPost('images', text)}
-                style={styles.input}
-            />
+            {/*<TextInput*/}
+            {/*    placeholder="Afbeeldingen (komma gescheiden, optioneel)"*/}
+            {/*    value={formBlogPost.images}*/}
+            {/*    onChangeText={text => handleInputBlogPost('images', text)}*/}
+            {/*    style={styles.input}*/}
+            {/*/>*/}
+
+            <TouchableOpacity
+                onPress={pickAndUploadImageForBlog}
+                style={[styles.button, { backgroundColor: 'green' }]}
+            >
+                <Text style={styles.buttonText}>Afbeelding toevoegen</Text>
+            </TouchableOpacity>
+
+            {formBlogPost.images.length > 0 && (
+                <View style={{ marginVertical: 10 }}>
+                    <Text style={{ fontSize: 12 }}>Toegevoegde afbeeldingen:</Text>
+                    {formBlogPost.images.map((url, idx) => (
+                        <Image
+                            key={idx}
+                            source={{ uri: url }}
+                            style={{ width: 100, height: 100, marginBottom: 10 }}
+                        />
+                    ))}
+                </View>
+            )}
+
+            <Text style={{ fontSize: 10 }}>
+                {JSON.stringify(formBlogPost.images, null, 2)}
+            </Text>
+
 
             <TouchableOpacity onPress={addBlogPost} style={styles.button}>
                 <Text style={styles.buttonText}>Toevoegen</Text>
