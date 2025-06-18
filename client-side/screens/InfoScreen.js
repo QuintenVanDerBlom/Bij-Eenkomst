@@ -1,33 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    ActivityIndicator,
+    Image,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
-import { db } from "../firebaseConfig";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { db } from '../firebaseConfig';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
 export default function InfoScreen() {
     const route = useRoute();
     const navigation = useNavigation();
     const { categoryId } = route.params;
 
-    const [entries, setEntries] = useState([]);
+    const [subcategories, setSubcategories] = useState([]);
     const [category, setCategory] = useState(null);
-    const [expanded, setExpanded] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                // Load entries
-                const q = query(collection(db, 'entries'), where('category_id', '==', categoryId));
+                // Subcategorieën ophalen
+                const q = query(collection(db, 'subcategories'), where('category_id', '==', categoryId));
                 const querySnapshot = await getDocs(q);
                 const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setEntries(data);
+                setSubcategories(data);
 
-                // Load category
+                // Categorie ophalen
                 const categoryRef = doc(db, 'categories', categoryId);
                 const categorySnap = await getDoc(categoryRef);
                 if (categorySnap.exists()) {
@@ -37,7 +44,7 @@ export default function InfoScreen() {
                 }
 
             } catch (error) {
-                console.error('Error loading data:', error);
+                console.error('Fout bij laden van gegevens:', error);
             } finally {
                 setLoading(false);
             }
@@ -45,10 +52,6 @@ export default function InfoScreen() {
 
         loadData();
     }, [categoryId]);
-
-    const toggleExpand = (index) => {
-        setExpanded(expanded === index ? null : index);
-    };
 
     if (loading) {
         return (
@@ -81,37 +84,24 @@ export default function InfoScreen() {
                     </>
                 )}
 
-                {entries.length === 0 ? (
-                    <Text>Geen informatie beschikbaar voor deze categorie.</Text>
+                {subcategories.length === 0 ? (
+                    <Text>Geen subcategorieën beschikbaar voor deze categorie.</Text>
                 ) : (
-                    entries.map((item, index) => (
-                        <View key={item.id} style={styles.accordionItem}>
+                    subcategories.map((sub) => (
+                        <View key={sub.id} style={styles.subcategoryCard}>
+                            <Text style={styles.subcategoryTitle}>{sub.name}</Text>
+                            <Text style={styles.subcategoryDescription}>{sub.description}</Text>
                             <TouchableOpacity
-                                style={styles.accordionHeader}
-                                onPress={() => toggleExpand(index)}
+                                onPress={() =>
+                                    navigation.navigate('SubInfo', {
+                                        subcategoryId: sub.id,
+                                    })
+                                }
                             >
-                                <Text style={styles.accordionTitle}>{item.title}</Text>
-                                <MaterialIcons
-                                    name={expanded === index ? 'expand-less' : 'expand-more'}
-                                    size={24}
-                                    color="#444"
-                                />
+                                <Text style={styles.moreInfoLink}>Meer info ➔</Text>
                             </TouchableOpacity>
-                            {expanded === index && (
-                                <View style={styles.accordionContent}>
-                                    <Text>{item.description}</Text>
-                                    <TouchableOpacity
-                                        onPress={() =>
-                                            navigation.navigate('SubInfo', {
-                                                entryId: item.id,
-                                            })
-                                        }
-                                    >
-                                        <Text style={styles.moreInfoLink}>Meer info ➔</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
                         </View>
+
                     ))
                 )}
             </ScrollView>
@@ -150,23 +140,23 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         resizeMode: 'cover',
     },
-    accordionItem: {
-        marginBottom: 10,
+    subcategoryCard: {
+        backgroundColor: '#f9f9f9',
+        borderRadius: 8,
+        padding: 15,
+        marginBottom: 12,
         borderWidth: 1,
-        borderRadius: 6,
-        overflow: 'hidden',
+        borderColor: '#ddd',
     },
-    accordionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        padding: 12,
+    subcategoryTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 6,
+        color: '#333',
     },
-    accordionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    accordionContent: {
-        padding: 12,
+    subcategoryDescription: {
+        fontSize: 15,
+        color: '#555',
     },
     moreInfoLink: {
         marginTop: 10,
