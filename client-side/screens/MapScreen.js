@@ -1,11 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert, Modal, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+    View,
+    StyleSheet,
+    Dimensions,
+    TouchableOpacity,
+    Text,
+    TextInput,
+    Alert,
+    Modal,
+    ScrollView,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable
+} from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const beeMarker = require('../assets/bee-marker.png');
 const butterflyMarker = require('../assets/butterfly-marker.png');
@@ -21,6 +37,7 @@ export default function MapScreen() {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [createModalVisible, setCreateModalVisible] = useState(false);
+    const [locationSaved, setLocationSaved] = useState(false);
 
     useEffect(() => {
         fetchLocations();
@@ -164,6 +181,24 @@ export default function MapScreen() {
     // Function to get the appropriate marker image
     const getMarkerImage = (type) => {
         return type === 'butterfly' ? butterflyMarker : beeMarker;
+    };
+
+    const markLocationAsVisited = async (location) => {
+        try {
+            const json = await AsyncStorage.getItem('visitedLocations');
+            const visited = json != null ? JSON.parse(json) : [];
+
+            const alreadyVisited = visited.some(item => item.name === location.name);
+            if (!alreadyVisited) {
+                visited.push(location);
+                await AsyncStorage.setItem('visitedLocations', JSON.stringify(visited));
+                setLocationSaved(true);
+            } else {
+                setLocationSaved(true);
+            }
+        } catch (e) {
+            console.error('Fout bij opslaan locatie:', e);
+        }
     };
 
     return (
@@ -539,6 +574,23 @@ export default function MapScreen() {
                                         </View>
                                     </View>
                                 )}
+
+                                <View>
+                                    <Pressable
+                                        style={[
+                                            styles.visitedButton,
+                                            locationSaved && styles.visitedButtonSaved
+                                        ]}
+                                        onPress={() => markLocationAsVisited({
+                                            name: selectedLocation.name
+                                        })}
+                                    >
+                                        <Text style={locationSaved ? styles.savedText : styles.unsavedText}>
+                                            {locationSaved ? 'Opgeslagen!' : 'Markeer als bezocht'}
+                                        </Text>
+                                    </Pressable>
+
+                                </View>
                             </View>
                         </ScrollView>
 
@@ -627,6 +679,36 @@ const styles = StyleSheet.create({
     typeButtonTextActive: {
         color: '#000',
         fontWeight: '600',
+    },
+    visitedButton: {
+        flex: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        backgroundColor: '#f9f9f9',
+        alignItems: 'center',
+    },
+    // visitedButton: {
+    //     backgroundColor: '#ccc',
+    //     padding: 12,
+    //     borderRadius: 8,
+    //     alignItems: 'center',
+    //     marginVertical: 10,
+    // },
+    visitedButtonSaved: {
+        backgroundColor: '#a5d6a7', // lichtgroen als visueel "success"
+        borderColor: '#388e3c',
+        borderWidth: 1,
+    },
+    unsavedText: {
+        color: '#000',
+        fontWeight: 'bold',
+    },
+    savedText: {
+        color: '#2e7d32', // donkergroen
+        fontWeight: 'bold',
     },
     // Modern modal styles - consistent across all modals
     modernModalOverlay: {
