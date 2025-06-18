@@ -5,12 +5,15 @@ import CategoryScreen from './screens/CategoryScreen';
 import MapScreen from './screens/MapScreen';
 import InfoScreen from "./screens/InfoScreen";
 import LoginScreen from "./screens/LoginScreen";
+import RegisterScreen from "./screens/RegisterScreen";
+import { AuthProvider } from './auth/AuthContext';
 import SubInfoScreen from "./screens/SubInfoScreen";
-import TestMarijn from "./screens/TestMarijn";
-import ProfileScreen from "./screens/ProfileScreen"
+import LocationsListScreen from "./screens/LocationsListScreen";
+import LocationDetailScreen from "./screens/LocationDetailScreen";
 // import AdminScreen from "./screens/AdminScreen";
+import TestMarijn from "./screens/TestMarijn";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { AuthProvider } from "./auth/AuthContext";
+
 
 const Stack = createNativeStackNavigator();
 
@@ -24,10 +27,13 @@ export default function App() {
                     <Stack.Screen name="InfoScreen" component={InfoScreen} />
                     <Stack.Screen name="Map" component={MapScreen} />
                     <Stack.Screen name="Login" component={LoginScreen} />
+                    <Stack.Screen name="Register" component={RegisterScreen} />
                     <Stack.Screen name="SubInfo" component={SubInfoScreen} options={{ title: 'Meer Informatie' }} />
+                    <Stack.Screen name="LocationsList" component={LocationsListScreen} />
+                    <Stack.Screen name="LocationDetail" component={LocationDetailScreen} />
+
                     {/*<Stack.Screen name="Admin" component={AdminScreen} />*/}
                     <Stack.Screen name="TestMarijn" component={TestMarijn} />
-                    <Stack.Screen name="Profile" component={ProfileScreen}/>
                 </Stack.Navigator>
             </NavigationContainer>
         </AuthProvider>

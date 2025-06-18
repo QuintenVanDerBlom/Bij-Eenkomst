@@ -29,13 +29,11 @@ export default function SubInfoScreen() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                // Fetch entries with subcategory_id
                 const q = query(collection(db, 'entries'), where('sub_category_id', '==', subcategoryId));
                 const querySnapshot = await getDocs(q);
                 const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setEntries(data);
 
-                // Fetch subcategory details
                 const subRef = doc(db, 'subcategories', subcategoryId);
                 const subSnap = await getDoc(subRef);
                 if (subSnap.exists()) {
@@ -84,6 +82,8 @@ export default function SubInfoScreen() {
                 ) : (
                     entries.map((entry, index) => (
                         <View key={entry.id} style={styles.accordionItem}>
+
+                            {/* Accordion header: alleen titel + icoon */}
                             <TouchableOpacity
                                 style={styles.accordionHeader}
                                 onPress={() => toggleExpand(index)}
@@ -95,15 +95,24 @@ export default function SubInfoScreen() {
                                     color="#444"
                                 />
                             </TouchableOpacity>
+
+                            {/* Accordion content: wordt alleen gerenderd als expanded */}
                             {expanded === index && (
                                 <View style={styles.accordionContent}>
-                                    {entry.head_image ? (
-                                        <Image
-                                            source={{ uri: entry.head_image }}
-                                            style={styles.image}
-                                            resizeMode="contain"  // behoud aspect ratio, hele afbeelding zichtbaar
-                                        />
-                                    ) : null}
+
+                                    {/* Image alleen tonen als head_image bestaat en een geldige URL is */}
+                                    {entry.head_image &&
+                                        typeof entry.head_image === 'string' &&
+                                        entry.head_image.startsWith('http') && (
+                                            <Image
+                                                source={{ uri: entry.head_image }}
+                                                style={styles.image}
+                                                resizeMode="contain"
+                                                onError={(error) => {
+                                                    console.warn('Afbeelding kon niet worden geladen:', entry.head_image, error.nativeEvent);
+                                                }}
+                                            />
+                                        )}
 
                                     <Text style={styles.label}>Beschrijving:</Text>
                                     <Text style={styles.text}>{entry.description}</Text>
@@ -163,11 +172,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         padding: 14,
+        alignItems: 'center',
     },
     accordionTitle: {
         fontSize: 16,
         fontWeight: '600',
         color: '#333',
+        flex: 1, // neemt ruimte tussen titel en icon
     },
     accordionContent: {
         paddingHorizontal: 14,
@@ -175,10 +186,10 @@ const styles = StyleSheet.create({
     },
     image: {
         width: '100%',
-        maxHeight: 200,
+        height: 200,
         borderRadius: 8,
         marginBottom: 10,
-        resizeMode: 'contain', // dit kan ook via prop, maar hier is het beter als prop
+        backgroundColor: '#eee', // tijdelijke achtergrond om ruimte te tonen
     },
     label: {
         fontWeight: 'bold',

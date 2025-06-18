@@ -1,19 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import {
-    View,
-    StyleSheet,
-    Dimensions,
-    TouchableOpacity,
-    Text,
-    TextInput,
-    Alert,
-    Modal,
-    ScrollView,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable
-} from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert, Modal, ScrollView, Image, KeyboardAvoidingView, Pressable, Platform } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
@@ -26,8 +12,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const beeMarker = require('../assets/bee-marker.png');
 const butterflyMarker = require('../assets/butterfly-marker.png');
 
-export default function MapScreen() {
+export default function MapScreen({ route }) {
     const navigation = useNavigation();
+    const { focusLocation } = route.params || {};
+    const mapRef = useRef(null);
+
     const [pins, setPins] = useState([]);
     const [newPin, setNewPin] = useState(null);
     const [pinTitle, setPinTitle] = useState('');
@@ -42,6 +31,21 @@ export default function MapScreen() {
     useEffect(() => {
         fetchLocations();
     }, []);
+
+    // Focus op de geselecteerde locatie wanneer deze wordt doorgegeven
+    useEffect(() => {
+        if (focusLocation && mapRef.current) {
+            // Focus op de geselecteerde locatie
+            setTimeout(() => {
+                mapRef.current.animateToRegion({
+                    latitude: focusLocation.latitude,
+                    longitude: focusLocation.longitude,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                }, 1000);
+            }, 500);
+        }
+    }, [focusLocation]);
 
     const fetchLocations = async () => {
         try {
@@ -203,20 +207,29 @@ export default function MapScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Header with back button */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            {/* Header with back button and list button */}
+            <View style={styles.headerContainer}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
                     <Ionicons name="arrow-back" size={24} color="#333" />
-                    <Text style={styles.backText}>Terug</Text>
+                    <Text style={styles.headerButtonText}>Terug</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('LocationsList')}
+                    style={[styles.headerButton, styles.listButton]}
+                >
+                    <Ionicons name="list" size={24} color="#333" />
+                    <Text style={styles.headerButtonText}>Lijst</Text>
                 </TouchableOpacity>
             </View>
 
             {/* Map */}
             <MapView
+                ref={mapRef}
                 style={styles.map}
                 initialRegion={{
-                    latitude: 51.9225,
-                    longitude: 4.47917,
+                    latitude: focusLocation?.latitude || 51.9225,
+                    longitude: focusLocation?.longitude || 4.47917,
                     latitudeDelta: 0.01,
                     longitudeDelta: 0.01,
                 }}
@@ -228,11 +241,15 @@ export default function MapScreen() {
                         coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
                         title={pin.name}
                         onPress={() => handlePinPress(pin)}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        centerOffset={{ x: 0, y: 0 }}
                     >
-                        <Image
-                            source={getMarkerImage(pin.type)}
-                            style={styles.markerImage}
-                        />
+                        <View style={styles.markerContainer}>
+                            <Image
+                                source={getMarkerImage(pin.type)}
+                                style={styles.markerImage}
+                            />
+                        </View>
                     </Marker>
                 ))}
                 {newPin && (
@@ -240,11 +257,15 @@ export default function MapScreen() {
                         key="new-pin"
                         coordinate={newPin}
                         title="Nieuwe locatie"
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        centerOffset={{ x: 0, y: 0 }}
                     >
-                        <Image
-                            source={getMarkerImage(pinType)}
-                            style={styles.markerImage}
-                        />
+                        <View style={styles.markerContainer}>
+                            <Image
+                                source={getMarkerImage(pinType)}
+                                style={styles.markerImage}
+                            />
+                        </View>
                     </Marker>
                 )}
             </MapView>
@@ -619,30 +640,48 @@ const styles = StyleSheet.create({
         flex: 1,
         position: 'relative',
     },
-    header: {
+    headerContainer: {
         position: 'absolute',
         top: 40,
         left: 16,
+        right: 16,
         zIndex: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    headerButton: {
         backgroundColor: 'rgba(255,255,255,0.9)',
         borderRadius: 8,
-        padding: 6,
+        padding: 8,
         flexDirection: 'row',
         alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    listButton: {
+        backgroundColor: 'rgba(255, 215, 0, 0.9)', // Yellow background for list button
+    },
+    headerButtonText: {
+        marginLeft: 6,
+        fontSize: 16,
+        color: '#333',
+        fontWeight: '500',
     },
     map: {
         ...StyleSheet.absoluteFillObject,
     },
-    backButton: {
-        flexDirection: 'row',
+    // Custom marker container and image - TERUG NAAR ORIGINELE GROOTTE
+    markerContainer: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
         alignItems: 'center',
+        overflow: 'visible',
     },
-    backText: {
-        marginLeft: 6,
-        fontSize: 16,
-        color: '#333',
-    },
-    // Custom marker image style
     markerImage: {
         width: 40,
         height: 40,
@@ -690,13 +729,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
         alignItems: 'center',
     },
-    // visitedButton: {
-    //     backgroundColor: '#ccc',
-    //     padding: 12,
-    //     borderRadius: 8,
-    //     alignItems: 'center',
-    //     marginVertical: 10,
-    // },
     visitedButtonSaved: {
         backgroundColor: '#a5d6a7', // lichtgroen als visueel "success"
         borderColor: '#388e3c',
