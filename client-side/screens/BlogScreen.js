@@ -37,7 +37,6 @@ export default function BlogScreen() {
                                 console.warn("Failed to fetch user:", e);
                             }
                         }
-                        console.log(`Post ID: ${post.id}, user_id: ${post.user_id}`);
                         return { ...post, username };
                     })
                 );
@@ -87,15 +86,18 @@ export default function BlogScreen() {
 
                     return (
                         <View key={post.id} style={styles.postContainer}>
-                            {post.imageUrl && (
-                                <Image
-                                    source={{ uri: post.imageUrl }}
-                                    style={{ width: '100%', height: 200, borderRadius: 10 }}
-                                    resizeMode="cover"
-                                />
-                            )}
                             <Text style={styles.postTitle}>{post.title}</Text>
                             <Text style={styles.postAuthor}>By {post.username}</Text>
+
+                            {post.images?.length > 0 && post.images.map((imageUrl, index) => (
+                                <Image
+                                    key={index}
+                                    source={{ uri: imageUrl }}
+                                    style={styles.postImage}
+                                    resizeMode="cover"
+                                />
+                            ))}
+
                             <Text style={styles.postContent}>{displayedText}</Text>
 
                             {shouldTruncate && (
@@ -179,7 +181,12 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         color: '#666',
         marginTop: 2,
+    },
+    postImage: {
+        width: '100%',
+        height: 200,
+        borderRadius: 10,
+        marginBottom: 10,
+        marginTop: 10
     }
-
-
 });

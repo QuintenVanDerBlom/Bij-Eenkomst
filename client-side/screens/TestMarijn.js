@@ -5,6 +5,7 @@ import {collection, addDoc, getDocs, deleteDoc, updateDoc, doc} from 'firebase/f
 import {Picker} from '@react-native-picker/picker';
 
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebaseConfig';
 
@@ -31,7 +32,14 @@ export default function FirestoreCRUDPage() {
 
             if (!result.canceled && result.assets && result.assets.length > 0) {
                 const image = result.assets[0];
-                const response = await fetch(image.uri);
+
+                const compressed = await ImageManipulator.manipulateAsync(
+                    image.uri,
+                    [{ resize: { width: 800 } }], // resize to 800px wide
+                    { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
+                );
+
+                const response = await fetch(compressed.uri);
                 const blob = await response.blob();
 
                 const filename = image.uri.substring(image.uri.lastIndexOf('/') + 1);
