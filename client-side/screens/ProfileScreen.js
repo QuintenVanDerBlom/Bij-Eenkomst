@@ -1,39 +1,90 @@
 import React, {useEffect, useState} from 'react'
+import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppNavigator from '../navigation/AppNavigator';
 import {StyleSheet, View, Text, ScrollView, Pressable, Switch, Alert, Modal, TextInput } from "react-native";
 import HeaderBar from "../navigation/HeaderBar";
-import { onAuthStateChanged } from 'firebase/auth';
-import {auth, db} from '../firebaseConfig';
-import {collection, getDocs} from "firebase/firestore";
+import { db } from '../firebaseConfig';
+import {collection, doc, getDocs, updateDoc} from "firebase/firestore";
 import Feather from "react-native-vector-icons/Feather";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
-import { getAuth, deleteUser } from 'firebase/auth';
+import { deleteUser } from 'firebase/auth';
+import { useAuth } from "../auth/AuthContext";
 
 export default function ProfileScreen() {
-    const [user, setUser] = useState(null);
-    const [locations, setLocations] = useState(null);
-    const [darkMode, setDarkMode] = useState(null);
-    const [showPassword, setShowPassword] = useState(false);
-    const [visitedLocations, setVisitedLocations] = useState([]);
-    const [isModalVisible, setModalVisible] = useState(false);
-    const [editedName, setEditedName] = useState(user?.full_name || '');
-    const [editedEmail, setEditedEmail] = useState(user?.mail_adress || '');
+    const { currentUser, userData } = useAuth();
+    const [editedName, setEditedName] = useState('');
+    const [editedEmail, setEditedEmail] = useState('');
     const [editedPassword, setEditedPassword] = useState('');
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [locations, setLocations] = useState(null);
+    const [visitedLocations, setVisitedLocations] = useState([]);
+    const [darkMode, setDarkMode] = useState(null);
+    const navigation = useNavigation();
 
-    // useEffect(() => {
-    //     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-    //         if (currentUser) {
-    //             setUser(currentUser);
-    //         } else {
-    //             setUser(null);
-    //         }
-    //     });
-    //
-    //     // Cleanup de listener
-    //     return () => unsubscribe();
-    // }, []);
+    const auth = useAuth();
+
+    useEffect(() => {
+        if (auth.loading) return; // Wacht tot de auth-status geladen is
+        if (!currentUser) {
+            navigation.navigate('Login');
+        }
+    }, [currentUser, auth.loading]);
+
+    useEffect(() => {
+        if (userData) {
+            setEditedName(userData.full_name || '');
+            setEditedEmail(userData.mail_adress || '');
+        }
+    }, [userData]);
+
+    const updateUserData = async () => {
+        if (!userData?.id) return;
+
+        const updatedFields = {
+            full_name: editedName,
+            mail_adress: editedEmail,
+        };
+
+        if (editedPassword) {
+            updatedFields.passwordHash = editedPassword; // Alleen als je zelf wachtwoorden beheert
+        }
+
+        try {
+            const userRef = doc(db, 'users', userData.id);
+            await updateDoc(userRef, updatedFields);
+            Alert.alert('Succes', 'Profiel bijgewerkt.');
+            setModalVisible(false);
+        } catch (error) {
+            console.error('Fout bij updaten profiel:', error);
+            Alert.alert('Fout', 'Kon profiel niet bijwerken.');
+        }
+    };
+
+    const handleSave = () => {
+        updateUserData();
+    };
+
+    const handleDeleteAccount = async () => {
+        try {
+            if (currentUser) {
+                await deleteUser(currentUser);
+                Alert.alert('Account verwijderd', 'Je account is verwijderd.');
+                navigation.navigate('Login')
+            }
+        } catch (error) {
+            if (error.code === 'auth/requires-recent-login') {
+                Alert.alert(
+                    'Opnieuw inloggen vereist',
+                    'Log opnieuw in om je account te verwijderen.'
+                );
+            } else {
+                Alert.alert('Fout', 'Er ging iets mis bij het verwijderen van je account.');
+            }
+        }
+    };
 
     useEffect(() => {
         fetchLocations();
@@ -70,42 +121,13 @@ export default function ProfileScreen() {
         }, [])
     );
 
-    const handleSave = () => {
-        // Hier zou je normaal je gegevens naar Firebase sturen
-        // Voor nu: log of update je state
-        console.log('Nieuwe gegevens:', {
-            naam: editedName,
-            email: editedEmail,
-            wachtwoord: editedPassword,
-        });
-
-        setModalVisible(false);
-    };
-
-    const deleteAccount = async () => {
-        try {
-            const auth = getAuth();
-            const user = auth.currentUser;
-
-            if (user) {
-                await deleteUser(user);
-                Alert.alert('Account verwijderd', 'Je account is succesvol verwijderd.');
-                // eventueel: navigeren naar login/home
-            }
-        } catch (error) {
-            console.error('Fout bij verwijderen account:', error);
-
-            if (error.code === 'auth/requires-recent-login') {
-                Alert.alert(
-                    'Bevestiging nodig',
-                    'Je moet recent opnieuw zijn ingelogd om je account te verwijderen. Log opnieuw in en probeer het nog eens.'
-                );
-            } else {
-                Alert.alert('Fout', 'Er ging iets mis bij het verwijderen van je account.');
-            }
-        }
-    };
-
+    if (!currentUser || !userData) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Text>Je bent niet ingelogd...</Text>
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -115,19 +137,19 @@ export default function ProfileScreen() {
                 <View>
                     <Text style={styles.title}>Profiel</Text>
                     <Text style={styles.welcome}>Welkom</Text>
-                    {/*<Text style={styles.username}>{user.full_name}</Text>*/}
+                    <Text style={styles.username}>{userData?.full_name}</Text>
                 </View>
 
                 <View style={styles.profileCard}>
                     <View style={styles.cardHeader}>
                         <Text style={styles.cardTitle}>Naam:</Text>
-                        {/*<Text style={styles.cardText}>{user.full_name}</Text>*/}
+                        <Text style={styles.cardText}>{userData?.full_name}</Text>
                         <Pressable style={styles.editIcon} onPress={() => setModalVisible(true)}>
                             <Feather name="tool" size={20} color="#000" />
                         </Pressable>
                     </View>
                     <Text style={styles.cardTitle}>E-mail:</Text>
-                    {/*<Text style={styles.cardText}>{user.mail_adress}</Text>*/}
+                    <Text style={styles.cardText}>{userData?.mail_adress}</Text>
                     <Text style={styles.cardTitle}>Wachtwoord:</Text>
                     <View style={styles.passwordRow}>
                         <Text style={styles.cardText}>{showPassword ? 'wachtwoord123' : '********'}</Text>
@@ -173,21 +195,20 @@ export default function ProfileScreen() {
                             <Text>Naam:</Text>
                             <TextInput
                                 style={styles.input}
-                                // placeholder={user.full_name}
+                                placeholder={userData.full_name || ''}
                                 value={editedName}
                                 onChangeText={setEditedName}
                             />
                             <Text>E-mail:</Text>
                             <TextInput
                                 style={styles.input}
-                                // placeholder={user.mail_adress}
+                                placeholder={userData.mail_adress || ''}
                                 value={editedEmail}
                                 onChangeText={setEditedEmail}
                             />
                             <Text>Wachtwoord:</Text>
                             <TextInput
                                 style={styles.input}
-                                // placeholder={user.password}
                                 secureTextEntry
                                 value={editedPassword}
                                 onChangeText={setEditedPassword}
@@ -201,7 +222,7 @@ export default function ProfileScreen() {
                                 <Pressable onPress={() => setModalVisible(false)}>
                                     <Text style={{ color: 'red', marginTop: 20 }}>Annuleer</Text>
                                 </Pressable>
-                                <Pressable onPress={() => deleteAccount()}>
+                                <Pressable onPress={() => handleDeleteAccount()}>
                                     <Text style={{ color: 'red', marginTop: 20 }}>Verwijder account</Text>
                                 </Pressable>
                             </View>

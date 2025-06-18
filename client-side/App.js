@@ -10,24 +10,26 @@ import TestMarijn from "./screens/TestMarijn";
 import ProfileScreen from "./screens/ProfileScreen"
 // import AdminScreen from "./screens/AdminScreen";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-
+import { AuthProvider } from "./auth/AuthContext";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
     return (
-        <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="Home" component={HomeScreen} />
-                <Stack.Screen name="Category" component={CategoryScreen} />
-                <Stack.Screen name="InfoScreen" component={InfoScreen} />
-                <Stack.Screen name="Map" component={MapScreen} />
-                <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="SubInfo" component={SubInfoScreen} options={{ title: 'Meer Informatie' }} />
-                {/*<Stack.Screen name="Admin" component={AdminScreen} />*/}
-                <Stack.Screen name="TestMarijn" component={TestMarijn} />
-                <Stack.Screen name="Profile" component={ProfileScreen}/>
-            </Stack.Navigator>
-        </NavigationContainer>
+        <AuthProvider>
+            <NavigationContainer>
+                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="Home" component={HomeScreen} />
+                    <Stack.Screen name="Category" component={CategoryScreen} />
+                    <Stack.Screen name="InfoScreen" component={InfoScreen} />
+                    <Stack.Screen name="Map" component={MapScreen} />
+                    <Stack.Screen name="Login" component={LoginScreen} />
+                    <Stack.Screen name="SubInfo" component={SubInfoScreen} options={{ title: 'Meer Informatie' }} />
+                    {/*<Stack.Screen name="Admin" component={AdminScreen} />*/}
+                    <Stack.Screen name="TestMarijn" component={TestMarijn} />
+                    <Stack.Screen name="Profile" component={ProfileScreen}/>
+                </Stack.Navigator>
+            </NavigationContainer>
+        </AuthProvider>
     );
 }
