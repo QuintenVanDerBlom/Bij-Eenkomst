@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
         zIndex: 999,
     },
     navItem: {
-        flex: 1, // zorgt dat elke knop 1/3 inneemt
+        flex: 1, // zorgt dat elke knop 1/4 inneemt nu
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',
