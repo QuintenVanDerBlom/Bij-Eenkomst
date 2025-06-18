@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import HeaderBar from "../navigation/HeaderBar";
 import { db } from '../firebaseConfig';
-import {collection, doc, getDocs, updateDoc} from "firebase/firestore";
+import { doc, updateDoc} from "firebase/firestore";
 import Feather from "react-native-vector-icons/Feather";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -30,7 +30,6 @@ export default function ProfileScreen() {
     const [editedPassword, setEditedPassword] = useState('');
     const [isModalVisible, setModalVisible] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [locations, setLocations] = useState(null);
     const [visitedLocations, setVisitedLocations] = useState([]);
     const [darkMode, setDarkMode] = useState(null);
     const navigation = useNavigation();
@@ -94,24 +93,6 @@ export default function ProfileScreen() {
             } else {
                 Alert.alert('Fout', 'Er ging iets mis bij het verwijderen van je account.');
             }
-        }
-    };
-
-    useEffect(() => {
-        fetchLocations();
-    }, []);
-
-    const fetchLocations = async () => {
-        try {
-            const querySnapshot = await getDocs(collection(db, 'locations'));
-            const data = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setLocations(data);
-        } catch (error) {
-            console.error('Error fetching locations:', error);
-            Alert.alert('Error', 'Failed to fetch locations');
         }
     };
 
