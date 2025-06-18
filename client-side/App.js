@@ -10,6 +10,7 @@ import { AuthProvider } from './auth/AuthContext';
 import SubInfoScreen from "./screens/SubInfoScreen";
 import LocationsListScreen from "./screens/LocationsListScreen";
 import LocationDetailScreen from "./screens/LocationDetailScreen";
+import ProfileScreen from "./screens/ProfileScreen";
 // import AdminScreen from "./screens/AdminScreen";
 import TestMarijn from "./screens/TestMarijn";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -31,7 +32,7 @@ export default function App() {
                     <Stack.Screen name="SubInfo" component={SubInfoScreen} options={{ title: 'Meer Informatie' }} />
                     <Stack.Screen name="LocationsList" component={LocationsListScreen} />
                     <Stack.Screen name="LocationDetail" component={LocationDetailScreen} />
-
+                    <Stack.Screen name="Profile" component={ProfileScreen} />
                     {/*<Stack.Screen name="Admin" component={AdminScreen} />*/}
                     <Stack.Screen name="TestMarijn" component={TestMarijn} />
                 </Stack.Navigator>

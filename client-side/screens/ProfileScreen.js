@@ -2,7 +2,18 @@ import React, {useEffect, useState} from 'react'
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppNavigator from '../navigation/AppNavigator';
-import {StyleSheet, View, Text, ScrollView, Pressable, Switch, Alert, Modal, TextInput } from "react-native";
+import {
+    StyleSheet,
+    View,
+    Text,
+    ScrollView,
+    Pressable,
+    Switch,
+    Alert,
+    Modal,
+    TextInput,
+    ActivityIndicator
+} from "react-native";
 import HeaderBar from "../navigation/HeaderBar";
 import { db } from '../firebaseConfig';
 import {collection, doc, getDocs, updateDoc} from "firebase/firestore";
@@ -13,7 +24,7 @@ import { deleteUser } from 'firebase/auth';
 import { useAuth } from "../auth/AuthContext";
 
 export default function ProfileScreen() {
-    const { currentUser, userData } = useAuth();
+    const { currentUser, userData, loading  } = useAuth();
     const [editedName, setEditedName] = useState('');
     const [editedEmail, setEditedEmail] = useState('');
     const [editedPassword, setEditedPassword] = useState('');
@@ -121,12 +132,17 @@ export default function ProfileScreen() {
         }, [])
     );
 
-    if (!currentUser || !userData) {
+    if (loading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text>Je bent niet ingelogd...</Text>
+                <ActivityIndicator size="large" color="#0000ff" />
             </View>
         );
+    }
+
+    if (!currentUser || !userData) {
+        navigation.navigate('Login');
+        return null;
     }
 
     return (
@@ -143,16 +159,16 @@ export default function ProfileScreen() {
                 <View style={styles.profileCard}>
                     <View style={styles.cardHeader}>
                         <Text style={styles.cardTitle}>Naam:</Text>
-                        <Text style={styles.cardText}>{userData?.full_name}</Text>
                         <Pressable style={styles.editIcon} onPress={() => setModalVisible(true)}>
                             <Feather name="tool" size={20} color="#000" />
                         </Pressable>
                     </View>
+                    <Text style={styles.cardText}>{userData?.full_name}</Text>
                     <Text style={styles.cardTitle}>E-mail:</Text>
-                    <Text style={styles.cardText}>{userData?.mail_adress}</Text>
+                    <Text style={styles.cardText}>{userData?.mail_address}</Text>
                     <Text style={styles.cardTitle}>Wachtwoord:</Text>
                     <View style={styles.passwordRow}>
-                        <Text style={styles.cardText}>{showPassword ? 'wachtwoord123' : '********'}</Text>
+                        <Text style={styles.cardText}>{showPassword ? userData.password : '********'}</Text>
                         <Pressable onPress={() => setShowPassword(!showPassword)}>
                             <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} />
                         </Pressable>
@@ -202,7 +218,7 @@ export default function ProfileScreen() {
                             <Text>E-mail:</Text>
                             <TextInput
                                 style={styles.input}
-                                placeholder={userData.mail_adress || ''}
+                                placeholder={userData.mail_address || ''}
                                 value={editedEmail}
                                 onChangeText={setEditedEmail}
                             />
