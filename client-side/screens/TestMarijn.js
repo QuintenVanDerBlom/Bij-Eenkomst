@@ -1,8 +1,13 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image} from 'react-native';
 import {db} from '../firebaseConfig';
 import {collection, addDoc, getDocs, deleteDoc, updateDoc, doc} from 'firebase/firestore';
 import {Picker} from '@react-native-picker/picker';
+
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebaseConfig';
 
 
 export default function FirestoreCRUDPage() {
@@ -12,6 +17,57 @@ export default function FirestoreCRUDPage() {
     const [locations, setLocations] = useState([]);
     const [users, setUsers] = useState([]);
     const [entries, setEntries] = useState([]);
+    const [blogPosts, setBlogPosts] = useState([]);
+
+    const pickAndUploadImageForBlog = async () => {
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 0.5,
+            });
+
+
+            console.log("Result:", result);
+
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                const image = result.assets[0];
+
+                const compressed = await ImageManipulator.manipulateAsync(
+                    image.uri,
+                    [{ resize: { width: 800 } }], // resize to 800px wide
+                    { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
+                );
+
+                const response = await fetch(compressed.uri);
+                const blob = await response.blob();
+
+                const filename = image.uri.substring(image.uri.lastIndexOf('/') + 1);
+                const storageRef = ref(storage, `blogImages/${Date.now()}-${filename}`);
+
+                await uploadBytes(storageRef, blob);
+                const downloadURL = await getDownloadURL(storageRef);
+
+                setFormBlogPost(prev => ({
+                    ...prev,
+                    images: [...prev.images, downloadURL]
+                }));
+            }
+        } catch (err) {
+            console.error("Fout bij kiezen/uploaden:", err);
+        }
+    };
+
+
+    useEffect(() => {
+        (async () => {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                alert('Toegang tot de galerij is nodig om afbeeldingen te kunnen uploaden.');
+            }
+        })();
+    }, []);
+
 
 
 // Category
@@ -204,6 +260,40 @@ export default function FirestoreCRUDPage() {
 
 // Entry
 
+    /// Blogposts
+    const [formBlogPost, setFormBlogPost] = useState({
+        user_id: '',
+        title: '',
+        location_id: '',
+        content: '',
+        images: []
+    });
+
+    const handleInputBlogPost = (field, value) => {
+        setFormBlogPost({...formBlogPost, [field]: value});
+    };
+
+    const addBlogPost = async () => {
+        const { user_id, title, location_id, content, images } = formBlogPost;
+        if (!user_id || !title || !content) return;
+
+        console.log("Images before upload:", images);
+
+        await addDoc(collection(db, 'blogposts'), {
+            user_id,
+            title,
+            location_id: location_id || null,
+            content,
+            images: formBlogPost.images,
+            created_at: new Date().toISOString()
+        });
+
+        setFormBlogPost({ user_id: '', title: '', location_id: '', content: '', images: [] });
+        loadData();
+    };
+
+    /// Blogposts
+
     const loadData = async () => {
         const fetchCollection = async (name, setter) => {
             const querySnapshot = await getDocs(collection(db, name));
@@ -217,6 +307,8 @@ export default function FirestoreCRUDPage() {
         fetchCollection('locations', setLocations);
         fetchCollection('users', setUsers);
         fetchCollection('entries', setEntries);
+        fetchCollection('blogposts', setBlogPosts);
+
     };
 
     useEffect(() => {
@@ -452,6 +544,84 @@ export default function FirestoreCRUDPage() {
 
             {/*Entry*/}
 
+            {/*Blogpost*/}
+            <Text style={styles.header}>Voeg Blogpost toe</Text>
+
+            <Picker
+                selectedValue={formBlogPost.user_id}
+                onValueChange={(value) => handleInputBlogPost('user_id', value)}
+                style={styles.input}
+            >
+                <Picker.Item label="Selecteer gebruiker" value=""/>
+                {users.map((user) => (
+                    <Picker.Item key={user.id} label={user.full_name} value={user.id}/>
+                ))}
+            </Picker>
+
+            <TextInput
+                placeholder="Titel"
+                value={formBlogPost.title}
+                onChangeText={text => handleInputBlogPost('title', text)}
+                style={styles.input}
+            />
+
+            <Picker
+                selectedValue={formBlogPost.location_id}
+                onValueChange={(value) => handleInputBlogPost('location_id', value)}
+                style={styles.input}
+            >
+                <Picker.Item label="Selecteer locatie (optioneel)" value=""/>
+                {locations.map((loc) => (
+                    <Picker.Item key={loc.id} label={loc.name} value={loc.id}/>
+                ))}
+            </Picker>
+
+            <TextInput
+                placeholder="Content"
+                value={formBlogPost.content}
+                onChangeText={text => handleInputBlogPost('content', text)}
+                style={[styles.input, { textAlignVertical: 'top' }]}
+                multiline={true}
+                scrollEnabled={true}
+            />
+
+            {/*<TextInput*/}
+            {/*    placeholder="Afbeeldingen (komma gescheiden, optioneel)"*/}
+            {/*    value={formBlogPost.images}*/}
+            {/*    onChangeText={text => handleInputBlogPost('images', text)}*/}
+            {/*    style={styles.input}*/}
+            {/*/>*/}
+
+            <TouchableOpacity
+                onPress={pickAndUploadImageForBlog}
+                style={[styles.button, { backgroundColor: 'green' }]}
+            >
+                <Text style={styles.buttonText}>Afbeelding toevoegen</Text>
+            </TouchableOpacity>
+
+            {formBlogPost.images.length > 0 && (
+                <View style={{ marginVertical: 10 }}>
+                    <Text style={{ fontSize: 12 }}>Toegevoegde afbeeldingen:</Text>
+                    {formBlogPost.images.map((url, idx) => (
+                        <Image
+                            key={idx}
+                            source={{ uri: url }}
+                            style={{ width: 100, height: 100, marginBottom: 10 }}
+                        />
+                    ))}
+                </View>
+            )}
+
+            <Text style={{ fontSize: 10 }}>
+                {JSON.stringify(formBlogPost.images, null, 2)}
+            </Text>
+
+
+            <TouchableOpacity onPress={addBlogPost} style={styles.button}>
+                <Text style={styles.buttonText}>Toevoegen</Text>
+            </TouchableOpacity>
+            {/*Blogpost*/}
+
             <Text style={styles.header}>Alle gegevens</Text>
 
             {[{title: 'Categories', data: categories},
@@ -459,7 +629,8 @@ export default function FirestoreCRUDPage() {
                 {title: 'Subcategories', data: subcategories},
                 {title: 'Locations', data: locations},
                 {title: 'Users', data: users},
-                {title: 'Entries', data: entries}
+                {title: 'Entries', data: entries},
+                {title: 'Blogposts', data: blogPosts}
             ].map(({title, data}) => (
                 <View key={title} style={styles.block}>
                     <Text style={styles.blockTitle}>{title}</Text>
