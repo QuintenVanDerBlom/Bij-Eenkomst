@@ -33,7 +33,7 @@ export default function ProfileScreen() {
     const [showPassword, setShowPassword] = useState(false);
     const [visitedLocations, setVisitedLocations] = useState([]);
     const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
-    const darkMode = isDarkMode ? styles.darkMode : styles.normalMode;
+    const styles = getStyles(isDarkMode);
     const navigation = useNavigation();
 
     const auth = useAuth();
@@ -174,9 +174,9 @@ export default function ProfileScreen() {
                 <View style={styles.switchRow}>
                     <Text style={styles.switchLabel}>Darkmode</Text>
                     <Switch
-                        value={darkMode}
-                        onValueChange={setDarkMode}
-                        thumbColor={darkMode ? '#fff' : '#000'}
+                        value={isDarkMode}
+                        onValueChange={toggleDarkMode}
+                        thumbColor={isDarkMode ? '#fff' : '#000'}
                         trackColor={{ true: '#6c6c6c', false: '#ccc' }}
                     />
                 </View>
@@ -233,28 +233,30 @@ export default function ProfileScreen() {
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: isDarkMode ? '#121212' : '#fff',
     },
     container: {
         padding: 20,
         alignItems: 'center',
+        backgroundColor: isDarkMode ? '#1e1e1e' : '#fff',
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#000',
+        color: isDarkMode ? '#fff' : '#000',
     },
     welcome: {
         fontSize: 18,
         marginTop: 10,
+        color: isDarkMode ? '#ccc' : '#333',
     },
     username: {
         fontStyle: 'italic',
         fontSize: 16,
+        color: isDarkMode ? '#bbb' : '#000',
     },
     beeIcon: {
         width: 40,
@@ -262,12 +264,12 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     profileCard: {
-        backgroundColor: '#eee',
+        backgroundColor: isDarkMode ? '#2c2c2c' : '#eee',
         borderRadius: 10,
         padding: 15,
         marginVertical: 20,
         borderWidth: 1,
-        borderColor: '#444',
+        borderColor: isDarkMode ? '#555' : '#444',
         width: '100%',
     },
     cardHeader: {
@@ -277,9 +279,11 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontWeight: 'bold',
         marginTop: 10,
+        color: isDarkMode ? '#ddd' : '#000',
     },
     cardText: {
         fontSize: 16,
+        color: isDarkMode ? '#ccc' : '#000',
     },
     editIcon: {
         backgroundColor: '#ffeb3b',
@@ -297,10 +301,11 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
         marginBottom: 10,
+        color: isDarkMode ? '#eee' : '#000',
     },
     locationButton: {
         borderWidth: 1,
-        borderColor: '#000',
+        borderColor: isDarkMode ? '#888' : '#000',
         padding: 10,
         borderRadius: 10,
         marginVertical: 5,
@@ -308,9 +313,11 @@ const styles = StyleSheet.create({
         height: 50,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: isDarkMode ? '#333' : '#fff',
     },
     locationText: {
         fontSize: 15,
+        color: isDarkMode ? '#eee' : '#000',
     },
     modalBackground: {
         flex: 1,
@@ -319,7 +326,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContainer: {
-        backgroundColor: '#fff',
+        backgroundColor: isDarkMode ? '#2c2c2c' : '#fff',
         padding: 20,
         borderRadius: 10,
         width: '80%',
@@ -328,6 +335,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 10,
+        color: isDarkMode ? '#fff' : '#000',
     },
     deleteAccount: {
         flexDirection: "row",
@@ -335,10 +343,12 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ccc',
+        borderColor: isDarkMode ? '#555' : '#ccc',
         borderRadius: 6,
         padding: 10,
         marginVertical: 5,
+        backgroundColor: isDarkMode ? '#444' : '#fff',
+        color: isDarkMode ? '#fff' : '#000',
     },
     saveButton: {
         backgroundColor: '#4CAF50',
@@ -359,5 +369,7 @@ const styles = StyleSheet.create({
     switchLabel: {
         marginRight: 10,
         fontSize: 16,
+        color: isDarkMode ? '#ccc' : '#000',
     },
 });
+
