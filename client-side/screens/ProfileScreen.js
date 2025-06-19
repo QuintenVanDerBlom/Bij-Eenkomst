@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useContext, useEffect, useState} from 'react'
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppNavigator from '../navigation/AppNavigator';
@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { deleteUser } from 'firebase/auth';
 import { useAuth } from "../auth/AuthContext";
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function ProfileScreen() {
     const { currentUser, userData, loading  } = useAuth();
@@ -31,7 +32,8 @@ export default function ProfileScreen() {
     const [isModalVisible, setModalVisible] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [visitedLocations, setVisitedLocations] = useState([]);
-    const [darkMode, setDarkMode] = useState(null);
+    const { isDarkMode, toggleDarkMode } = useContext(DarkModeContext);
+    const darkMode = isDarkMode ? styles.darkMode : styles.normalMode;
     const navigation = useNavigation();
 
     const auth = useAuth();
