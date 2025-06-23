@@ -21,8 +21,6 @@ bij-eenkomst/
 ├── client/ # React Native frontend (de bloemen van onze app)
 └── server/ # Node.js backend (de bijenkorf zelf)
 
-text
-
 ## 🚀 Installatie Instructies
 
 Volg deze stappen om je eigen digitale bijenkorf op te zetten:
@@ -32,43 +30,29 @@ Volg deze stappen om je eigen digitale bijenkorf op te zetten:
 git clone <repository-url>
 cd bij-eenkomst
 
-text
-
 ### **Stap 2: Server-side Configuratie**
 
 cd server
-
-text
 
 Maak een `.env` bestand aan met de volgende inhoud:
 
 PORT=5000
 
-text
-
 Installeer de benodigde dependencies:
 
 npm install
-
-text
 
 ### **Stap 3: Client-side Configuratie**
 
 cd ../client
 
-text
-
 Maak een `.env` bestand aan met de volgende inhoud:
 
 PORT=8001
 
-text
-
 Installeer de benodigde dependencies:
 
 npm install
-
-text
 
 ### **Stap 4: Mobile Setup**
 Zorg ervoor dat je een van de volgende opties hebt:
@@ -82,14 +66,10 @@ Zorg ervoor dat je een van de volgende opties hebt:
 cd server
 node server.js
 
-text
-
 ### **Client Starten (De Bloemen Laten Bloeien)**
 
 cd client
 npx expo start
-
-text
 
 Scan de QR-code die verschijnt met je **Expo Go app** op je telefoon, of kies voor een simulator.
 
@@ -107,4 +87,4 @@ Als je tegen problemen aanloopt, controleer dan:
 
 ---
 
-**Veel plezier met het bouwen van je kennisbank! 🐝🍯**
+**Veel plezier met het bouwen van je kennisbank! Mocht je onze droom verder zetten :> 🐝🍯**
