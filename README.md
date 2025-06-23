@@ -4,7 +4,7 @@
 
 Bij-eenkomst is een innovatieve mobile applicatie die fungeert als een digitale bijenkorf waar gebruikers kennis kunnen verzamelen, delen en samen leren. Net zoals bijen samenwerken om hun korf te laten floreren, brengt deze app mensen samen om een bloeiende gemeenschap van kennis te creëren.
 
-## 🌻 Wat is Bij-eenkomst?
+## Wat is Bij-eenkomst?
 
 Bij-eenkomst combineert de kracht van een kennisbank met de warmte van een community. Gebruikers kunnen:
 
@@ -13,7 +13,7 @@ Bij-eenkomst combineert de kracht van een kennisbank met de warmte van een commu
 - **Samen leren** en groeien in een ondersteunende omgeving
 - **Verbindingen maken** met gelijkgestemde leerlingen
 
-## 🏗️ Project Structuur
+## Project Structuur
 
 Deze repository bevat zowel de client-side als server-side componenten:
 
@@ -21,7 +21,7 @@ bij-eenkomst/
 ├── client/ # React Native frontend (de bloemen van onze app)
 └── server/ # Node.js backend (de bijenkorf zelf)
 
-## 🚀 Installatie Instructies
+## Installatie Instructies
 
 Volg deze stappen om je eigen digitale bijenkorf op te zetten:
 
@@ -59,7 +59,7 @@ Zorg ervoor dat je een van de volgende opties hebt:
 - **Expo Go app** geïnstalleerd op je mobiele apparaat
 - **Een simulator** opgezet op je systeem (iOS Simulator of Android Emulator)
 
-## 🎯 De App Starten
+## De App Starten
 
 ### **Server Starten (De Bijenkorf Activeren)**
 
@@ -73,11 +73,11 @@ npx expo start
 
 Scan de QR-code die verschijnt met je **Expo Go app** op je telefoon, of kies voor een simulator.
 
-## 🎉 Klaar om te Zoemen!
+## Klaar om te Zoemen!
 
 **Viola!** Je digitale bijenkorf is nu actief en klaar voor gebruik. Begin met het verzamelen en delen van kennis in je eigen Bij-eenkomst community!
 
-## 🐛 Problemen?
+## Problemen?
 
 Als je tegen problemen aanloopt, controleer dan:
 - Of beide servers draaien (poort 5000 en 8001)
