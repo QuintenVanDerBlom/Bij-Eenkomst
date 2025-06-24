@@ -6,6 +6,7 @@ import AppNavigator from '../navigation/AppNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
+import { useAuth } from '../auth/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {DarkModeContext} from "../Contexts/DarkModeContext";
 
@@ -13,6 +14,9 @@ const beeMarker = require('../assets/bee-marker.png');
 const butterflyMarker = require('../assets/butterfly-marker.png');
 
 export default function MapScreen({ route }) {
+    const { currentUser } = useAuth();
+
+
     const navigation = useNavigation();
     const { focusLocation } = route.params || {};
     const mapRef = useRef(null);
@@ -29,6 +33,12 @@ export default function MapScreen({ route }) {
     const [locationSaved, setLocationSaved] = useState(false);
     const {isDarkMode} = useContext(DarkModeContext);
     const styles = getStyles(isDarkMode);
+
+    useEffect(() => {
+        if (currentUser) {
+            fetchLocations();
+        }
+    }, [currentUser]);
 
     useEffect(() => {
         fetchLocations();

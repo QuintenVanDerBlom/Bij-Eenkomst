@@ -1,19 +1,22 @@
 import React, {useContext, useEffect, useState} from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Image
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Image
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
 import { db } from "../firebaseConfig";
-import {collection, query, where, getDoc, doc, getDocs} from "firebase/firestore";
+import {collection, query, where, getDoc, doc, getDocs, orderBy} from "firebase/firestore";
 import {DarkModeContext} from "../Contexts/DarkModeContext";
+import { useAuth } from '../auth/AuthContext';
 
 export default function BlogScreen() {
     const route = useRoute();
     const navigation = useNavigation();
+    const { userData } = useAuth();
+
     const [posts, setPosts] = useState([]);
-    const [users, setUsers] = useState([]);
     const [expandedPosts, setExpandedPosts] = useState({});
     const [loading, setLoading] = useState(true);
     const { isDarkMode } = useContext(DarkModeContext);
@@ -22,7 +25,10 @@ export default function BlogScreen() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const postsQuery = query(collection(db, 'blogposts'));
+                const postsQuery = query(
+                    collection(db, 'blogposts'),
+                    orderBy('created_at', 'desc')
+                );
                 const postsSnapshot = await getDocs(postsQuery);
 
                 const postsData = await Promise.all(
@@ -115,6 +121,15 @@ export default function BlogScreen() {
                 })}
             </ScrollView>
 
+            {userData && (
+                <TouchableOpacity
+                    style={styles.fab}
+                    onPress={() => navigation.navigate('MakeBlogPost')}
+                >
+                    <MaterialIcons name="add" size={28} color="#fff" />
+                </TouchableOpacity>
+            )}
+
             <AppNavigator />
         </SafeAreaView>
     );
@@ -195,6 +210,22 @@ export const getStyles = (isDarkMode) => StyleSheet.create({
         height: 200,
         borderRadius: 10,
         marginBottom: 10,
-        marginTop: 10,
-    }
+        marginTop: 10
+    },
+    fab: {
+        position: 'absolute',
+        right: 20,
+        bottom: 90,
+        backgroundColor: '#785C82',
+        borderRadius: 30,
+        width: 60,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5,
+    },
 });

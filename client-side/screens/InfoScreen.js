@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
+import Searchbar from '../components/SearchBar';
 import AppNavigator from '../navigation/AppNavigator';
 import { db } from '../firebaseConfig';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -74,6 +75,17 @@ export default function InfoScreen() {
                         <MaterialIcons name="arrow-back" size={28} color={isDarkMode? "#fff": "#444"} />
                     </TouchableOpacity>
                 </View>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <MaterialIcons name="arrow-back" size={28} color="#444" />
+                </TouchableOpacity>
+                <View style={styles.searchBar}>
+                    <Searchbar />
+                </View>
+            </View>
+
+
+
 
                 <ScrollView contentContainerStyle={styles.scrollView}>
                     {category && (
@@ -126,12 +138,18 @@ const getStyles = (isDarkMode) => StyleSheet.create({
         paddingBottom: 15
     },
     header: {
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingHorizontal: 16,
         paddingTop: 10,
         paddingBottom: 10,
+        gap: 10, // optioneel voor ruimte tussen knop en balk
     },
     scrollView: {
         padding: 20,
+    },
+    searchBar: {
+        flex: 1, // neemt alle resterende ruimte in
     },
     title: {
         fontSize: 24,
