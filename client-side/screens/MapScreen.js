@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {useEffect, useState, useRef, useContext} from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert, Modal, ScrollView, Image, KeyboardAvoidingView, Pressable, Platform } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 
 const beeMarker = require('../assets/bee-marker.png');
@@ -27,6 +28,8 @@ export default function MapScreen({ route }) {
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [createModalVisible, setCreateModalVisible] = useState(false);
     const [locationSaved, setLocationSaved] = useState(false);
+    const {isDarkMode} = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     useEffect(() => {
         fetchLocations();
@@ -210,7 +213,7 @@ export default function MapScreen({ route }) {
             {/* Header with back button and list button */}
             <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-                    <Ionicons name="arrow-back" size={24} color="#333" />
+                    <Ionicons name="arrow-back" size={24} color={isDarkMode? "#fff": "#333"} />
                     <Text style={styles.headerButtonText}>Terug</Text>
                 </TouchableOpacity>
 
