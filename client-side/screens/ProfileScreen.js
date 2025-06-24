@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { deleteUser } from 'firebase/auth';
 import { useAuth } from "../auth/AuthContext";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 export default function ProfileScreen() {
     const auth = useAuth();
