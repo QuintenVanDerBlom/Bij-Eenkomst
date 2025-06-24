@@ -119,7 +119,7 @@ export default function HomeScreen() {
                                 style={[styles.authButton, styles.registerButton]}
                                 onPress={() => navigation.navigate('Register')}
                             >
-                                <Text style={styles.authButtonText}>Registreren</Text>
+                                <Text style={styles.registerButton}>Registreren</Text>
                             </TouchableOpacity>
                         </>
                     )}
@@ -179,8 +179,6 @@ const styles = StyleSheet.create({
     },
     // Auth buttons container
     authButtonsContainer: {
-        top: 20,
-        right: 16,
         flexDirection: 'row',
         justifyContent: 'flex-end',
         alignItems: 'center',
@@ -188,6 +186,7 @@ const styles = StyleSheet.create({
         marginTop: 8,
         paddingHorizontal: 16,
     },
+
 
     // Logged in container
     loggedInContainer: {
