@@ -9,10 +9,13 @@ import AppNavigator from '../navigation/AppNavigator';
 import { db } from "../firebaseConfig";
 import { collection, query, where, getDoc, doc, getDocs, orderBy } from "firebase/firestore";
 
+import { useAuth } from '../auth/AuthContext';
 
 export default function BlogScreen() {
     const route = useRoute();
     const navigation = useNavigation();
+    const { userData } = useAuth();
+
     const [posts, setPosts] = useState([]);
     const [expandedPosts, setExpandedPosts] = useState({});
     const [loading, setLoading] = useState(true);
@@ -116,12 +119,14 @@ export default function BlogScreen() {
                 })}
             </ScrollView>
 
-            <TouchableOpacity
-                style={styles.fab}
-                onPress={() => navigation.navigate('MakeBlogPost')}
-            >
-                <MaterialIcons name="add" size={28} color="#fff" />
-            </TouchableOpacity>
+            {userData && (
+                <TouchableOpacity
+                    style={styles.fab}
+                    onPress={() => navigation.navigate('MakeBlogPost')}
+                >
+                    <MaterialIcons name="add" size={28} color="#fff" />
+                </TouchableOpacity>
+            )}
 
             <AppNavigator />
         </SafeAreaView>

@@ -45,6 +45,7 @@ export default function MakeBlogScreen() {
     useEffect(() => {
         loadData();
     }, []);
+
     const pickAndUploadImageForBlog = async () => {
         try {
             const result = await ImagePicker.launchImageLibraryAsync({
