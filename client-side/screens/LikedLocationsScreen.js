@@ -1,5 +1,5 @@
 // screens/LikedLocationsScreen.js
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,12 +7,15 @@ import { useAuth } from '../auth/AuthContext';
 import { db } from '../firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import LikedLocationsService from '../services/LikedLocationsService';
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function LikedLocationsScreen() {
     const navigation = useNavigation();
     const { currentUser } = useAuth();
     const [likedLocations, setLikedLocations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const {isDarkMode} = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -132,10 +135,10 @@ export default function LikedLocationsScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: isDarkMode ? '#121212' : '#f8f9fa',
     },
     header: {
         flexDirection: 'row',
@@ -143,15 +146,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 50,
         paddingBottom: 16,
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
         borderBottomWidth: 1,
-        borderBottomColor: '#e9ecef',
+        borderBottomColor: isDarkMode ? '#333' : '#e9ecef',
         justifyContent: 'space-between',
     },
     headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#000',
+        color: isDarkMode ? '#fff' : '#000',
     },
     listContent: {
         padding: 16,
@@ -159,7 +162,7 @@ const styles = StyleSheet.create({
     itemContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
         borderRadius: 12,
         padding: 16,
         marginBottom: 12,
@@ -173,7 +176,7 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: '#FFF8DC',
+        backgroundColor: isDarkMode ? '#2a2a2a' : '#FFF8DC',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
@@ -187,30 +190,30 @@ const styles = StyleSheet.create({
     itemTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#000',
+        color: isDarkMode ? '#fff' : '#000',
         marginBottom: 4,
     },
     itemSubtitle: {
         fontSize: 14,
-        color: '#666',
+        color: isDarkMode ? '#ccc' : '#666',
         marginBottom: 4,
         lineHeight: 20,
     },
     itemCoordinates: {
         fontSize: 12,
-        color: '#999',
+        color: isDarkMode ? '#aaa' : '#999',
         fontFamily: 'monospace',
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: isDarkMode ? '#121212' : '#f8f9fa',
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: '#666',
+        color: isDarkMode ? '#aaa' : '#666',
     },
     emptyContainer: {
         flex: 1,
@@ -221,13 +224,13 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#666',
+        color: isDarkMode ? '#aaa' : '#666',
         textAlign: 'center',
         marginTop: 16,
     },
     emptySubtext: {
         fontSize: 14,
-        color: '#999',
+        color: isDarkMode ? '#888' : '#999',
         textAlign: 'center',
         marginTop: 8,
     },

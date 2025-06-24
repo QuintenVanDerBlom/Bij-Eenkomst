@@ -1,5 +1,5 @@
 // LocationDetailScreen.js
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../auth/AuthContext';
 import LikedLocationsService from '../services/LikedLocationsService';
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function LocationDetailScreen() {
     const route = useRoute();
@@ -31,6 +32,8 @@ export default function LocationDetailScreen() {
     const [favoriteLoading, setFavoriteLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
     const [shareLoading, setShareLoading] = useState(false);
+    const { isDarkMode } = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     // Load like and favorite status when component mounts
     useEffect(() => {
@@ -243,7 +246,7 @@ export default function LocationDetailScreen() {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#333" />
+                    <Ionicons name="arrow-back" size={24} color={isDarkMode? "#fff": "#333"} />
                     <Text style={styles.backText}>Terug</Text>
                 </TouchableOpacity>
             </View>
@@ -265,7 +268,7 @@ export default function LocationDetailScreen() {
                     {/* Coordinates */}
                     <View style={styles.detailRow}>
                         <View style={styles.detailIconContainer}>
-                            <Ionicons name="location" size={20} color="#FFD700" />
+                            <Ionicons name="location" size={20} color={isDarkMode? "#333": "#FFD700"} />
                         </View>
                         <View style={styles.detailTextContainer}>
                             <Text style={styles.detailLabel}>Coördinaten</Text>
@@ -294,7 +297,7 @@ export default function LocationDetailScreen() {
                     {location.description && (
                         <View style={styles.detailRow}>
                             <View style={styles.detailIconContainer}>
-                                <Ionicons name="document-text" size={20} color="#FFD700" />
+                                <Ionicons name="document-text" size={20} color={isDarkMode? "#333":"#FFD700"} />
                             </View>
                             <View style={styles.detailTextContainer}>
                                 <Text style={styles.detailLabel}>Beschrijving</Text>
@@ -306,7 +309,7 @@ export default function LocationDetailScreen() {
                     {/* Popularity */}
                     <View style={styles.detailRow}>
                         <View style={styles.detailIconContainer}>
-                            <Ionicons name="heart" size={20} color="#FFD700" />
+                            <Ionicons name="heart" size={20} color={isDarkMode? "#333":"#FFD700"} />
                         </View>
                         <View style={styles.detailTextContainer}>
                             <Text style={styles.detailLabel}>Populariteit</Text>
@@ -381,7 +384,7 @@ export default function LocationDetailScreen() {
                         {shareLoading ? (
                             <ActivityIndicator size="small" color="#666" />
                         ) : (
-                            <Ionicons name="share-outline" size={20} color="#666" />
+                            <Ionicons name="share-outline" size={20} color={isDarkMode? "#fff": "#666"} />
                         )}
                         <Text style={styles.actionText}>
                             {shareLoading ? "..." : "Delen"}
@@ -414,29 +417,29 @@ export default function LocationDetailScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: isDarkMode ? '#121212' : '#f8f9fa',
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: isDarkMode ? '#121212' : '#f8f9fa',
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: '#666',
+        color: isDarkMode ? '#aaa' : '#666',
     },
     header: {
         paddingTop: 50,
         paddingHorizontal: 16,
         paddingBottom: 16,
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
         borderBottomWidth: 1,
-        borderBottomColor: '#e9ecef',
+        borderBottomColor: isDarkMode ? '#333' : '#e9ecef',
     },
     backButton: {
         flexDirection: 'row',
@@ -445,7 +448,7 @@ const styles = StyleSheet.create({
     backText: {
         marginLeft: 8,
         fontSize: 16,
-        color: '#333',
+        color: isDarkMode ? '#ccc' : '#333',
         fontWeight: '500',
     },
     content: {
@@ -455,7 +458,7 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: '#FFF8DC',
+        backgroundColor: '#FFF8DC', // laat geelachtig
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
@@ -472,13 +475,13 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#000',
+        color: isDarkMode ? '#fff' : '#000',
         textAlign: 'center',
         marginBottom: 30,
         lineHeight: 34,
     },
     detailsSection: {
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
         borderRadius: 16,
         padding: 20,
         marginBottom: 20,
@@ -497,7 +500,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#FFF8DC',
+        backgroundColor: '#FFF8DC', // niet aanpassen
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
@@ -508,14 +511,14 @@ const styles = StyleSheet.create({
     detailLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#666',
+        color: isDarkMode ? '#aaa' : '#666',
         marginBottom: 4,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     detailValue: {
         fontSize: 16,
-        color: '#000',
+        color: isDarkMode ? '#eee' : '#000',
         lineHeight: 22,
     },
     actionSection: {
@@ -529,12 +532,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
         paddingVertical: 12,
         paddingHorizontal: 12,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#e9ecef',
+        borderColor: isDarkMode ? '#444' : '#e9ecef',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
@@ -553,19 +556,19 @@ const styles = StyleSheet.create({
         marginLeft: 6,
         fontSize: 13,
         fontWeight: '600',
-        color: '#666',
+        color: isDarkMode ? '#ccc' : '#666',
     },
     likedText: {
         color: '#fff',
     },
     favoritedText: {
-        color: '#291700',
+        color: '#291700', // geel dus niet aanpassen
     },
     mapButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#FFD700',
+        backgroundColor: '#FFD700', // laat zoals gevraagd
         paddingVertical: 16,
         paddingHorizontal: 24,
         borderRadius: 12,
@@ -580,10 +583,10 @@ const styles = StyleSheet.create({
         marginLeft: 12,
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#291700',
+        color: '#291700', // laat zoals gevraagd
     },
     infoSection: {
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
         borderRadius: 16,
         padding: 20,
         shadowColor: '#000',
@@ -595,12 +598,12 @@ const styles = StyleSheet.create({
     infoTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#000',
+        color: isDarkMode ? '#fff' : '#000',
         marginBottom: 16,
     },
     infoText: {
         fontSize: 16,
-        color: '#666',
+        color: isDarkMode ? '#ccc' : '#666',
         lineHeight: 24,
         marginBottom: 12,
     },

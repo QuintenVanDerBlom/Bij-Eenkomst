@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, {useEffect, useState, useCallback, useContext} from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Switch } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import AppNavigator from '../navigation/AppNavigator';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../auth/AuthContext';
 import LikedLocationsService from '../services/LikedLocationsService';
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function LocationsListScreen() {
     const navigation = useNavigation();
@@ -17,6 +18,8 @@ export default function LocationsListScreen() {
     const [showFavorites, setShowFavorites] = useState(false);
     const [favoriteLocationIds, setFavoriteLocationIds] = useState([]);
     const [initialLoad, setInitialLoad] = useState(true);
+    const {isDarkMode} = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     // Pre-load favorite IDs from AsyncStorage on component mount
     useEffect(() => {
@@ -242,18 +245,18 @@ export default function LocationsListScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: isDarkMode ? '#121212' : '#f8f9fa',
     },
     header: {
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
         paddingTop: 50,
         paddingBottom: 16,
         paddingHorizontal: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#000000',
+        borderBottomColor: isDarkMode ? '#333' : '#000000',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -261,7 +264,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#000000',
+        color: isDarkMode ? '#ffffff' : '#000000',
         flex: 1,
     },
     switchContainer: {
@@ -271,7 +274,7 @@ const styles = StyleSheet.create({
     },
     switchLabel: {
         fontSize: 16,
-        color: '#000',
+        color: isDarkMode ? '#fff' : '#000',
         fontWeight: '600',
     },
     refreshIndicator: {
@@ -279,12 +282,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 8,
-        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+        backgroundColor: isDarkMode ? 'rgba(255, 215, 0, 0.05)' : 'rgba(255, 215, 0, 0.1)',
         gap: 8,
     },
     refreshText: {
         fontSize: 14,
-        color: '#666',
+        color: isDarkMode ? '#aaa' : '#666',
         fontStyle: 'italic',
     },
     listContent: {
@@ -295,13 +298,14 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#000000',
+        borderColor: isDarkMode ? '#444' : '#000000',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 4,
         overflow: 'hidden',
+        backgroundColor: isDarkMode ? '#1e1e1e' : '#fff',
     },
     gradientBackground: {
         borderRadius: 15,
@@ -315,7 +319,7 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 25,
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.8)',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
@@ -355,12 +359,12 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: isDarkMode ? '#121212' : '#f8f9fa',
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: '#666',
+        color: isDarkMode ? '#aaa' : '#666',
     },
     emptyContainer: {
         flex: 1,
@@ -371,7 +375,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 18,
-        color: '#666',
+        color: isDarkMode ? '#999' : '#666',
         fontWeight: '600',
         textAlign: 'center',
         marginTop: 16,

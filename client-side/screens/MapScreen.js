@@ -317,6 +317,7 @@ export default function MapScreen({ route }) {
                                                     placeholder="Wijzig locatie naam"
                                                     onChangeText={(text) => setPinTitle(text)}
                                                     value={pinTitle}
+                                                    placeholderTextColor={isDarkMode ? "#fff" : "#444"}
                                                 />
                                             </View>
                                         </View>
@@ -334,6 +335,7 @@ export default function MapScreen({ route }) {
                                                     value={pinDescription}
                                                     multiline
                                                     numberOfLines={4}
+                                                    placeholderTextColor={isDarkMode ? "#fff" : "#444"}
                                                 />
                                             </View>
                                         </View>
