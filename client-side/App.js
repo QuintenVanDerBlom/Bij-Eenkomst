@@ -14,6 +14,7 @@ import LocationDetailScreen from "./screens/LocationDetailScreen";
 import TestMarijn from "./screens/TestMarijn";
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import BlogScreen from "./screens/BlogScreen";
+import MakeBlogScreen from "./screens/MakeBlogScreen";
 
 
 const Stack = createNativeStackNavigator();
@@ -28,6 +29,7 @@ export default function App() {
                     <Stack.Screen name="InfoScreen" component={InfoScreen} />
                     <Stack.Screen name="Map" component={MapScreen} />
                     <Stack.Screen name={"Blog"} component={BlogScreen} />
+                    <Stack.Screen name={"MakeBlogPost"} component={MakeBlogScreen} />
                     <Stack.Screen name="Login" component={LoginScreen} />
                     <Stack.Screen name="Register" component={RegisterScreen} />
                     <Stack.Screen name="SubInfo" component={SubInfoScreen} options={{ title: 'Meer Informatie' }} />

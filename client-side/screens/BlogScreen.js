@@ -112,6 +112,13 @@ export default function BlogScreen() {
                 })}
             </ScrollView>
 
+            <TouchableOpacity
+                style={styles.fab}
+                onPress={() => navigation.navigate('MakeBlogPost')}
+            >
+                <MaterialIcons name="add" size={28} color="#fff" />
+            </TouchableOpacity>
+
             <AppNavigator />
         </SafeAreaView>
     );
@@ -188,5 +195,21 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginBottom: 10,
         marginTop: 10
-    }
+    },
+    fab: {
+        position: 'absolute',
+        right: 20,
+        bottom: 90,
+        backgroundColor: '#785C82',
+        borderRadius: 30,
+        width: 60,
+        height: 60,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+        elevation: 5,
+    },
 });
