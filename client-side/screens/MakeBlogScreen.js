@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image} from 'react-native';
 import {db} from '../firebaseConfig';
-import {collection, addDoc, getDocs, deleteDoc, updateDoc, doc} from 'firebase/firestore';
+import {collection, addDoc, getDocs} from 'firebase/firestore';
 import {Picker} from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,13 +14,15 @@ import HeaderBar from "../navigation/HeaderBar";
 import {MaterialIcons} from "@expo/vector-icons";
 
 import { useAuth } from '../auth/AuthContext';
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function MakeBlogScreen() {
     const navigation = useNavigation();
     const { userData } = useAuth();
 
-    const [blogPosts, setBlogPosts] = useState([]);
     const [locations, setLocations] = useState([]);
+    const { isDarkMode } = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     const loadData = async () => {
         const fetchCollection = async (name, setter) => {
@@ -29,7 +31,6 @@ export default function MakeBlogScreen() {
             setter(data);
         };
         fetchCollection('locations', setLocations);
-
     };
 
     useEffect(() => {
@@ -40,7 +41,6 @@ export default function MakeBlogScreen() {
             }));
         }
     }, [userData]);
-
 
     useEffect(() => {
         loadData();
@@ -53,7 +53,6 @@ export default function MakeBlogScreen() {
                 allowsEditing: true,
                 quality: 0.5,
             });
-
 
             console.log("Result:", result);
 
@@ -137,14 +136,13 @@ export default function MakeBlogScreen() {
         }
     };
 
-
     return (
-        <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
+        <SafeAreaView style={styles.container}>
             <HeaderBar/>
 
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <MaterialIcons name="arrow-back" size={28} color="#444" />
+                    <MaterialIcons name="arrow-back" size={28} color={isDarkMode?"#fff": "#444"} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Blog</Text>
             </View>
@@ -155,6 +153,7 @@ export default function MakeBlogScreen() {
                     value={formBlogPost.title}
                     onChangeText={text => handleInputBlogPost('title', text)}
                     style={styles.input}
+                    placeholderTextColor={isDarkMode? "#fff": "#333"}
                 />
 
                 <Picker
@@ -162,9 +161,9 @@ export default function MakeBlogScreen() {
                     onValueChange={(value) => handleInputBlogPost('location_id', value)}
                     style={styles.input}
                 >
-                    <Picker.Item label="Selecteer locatie (optioneel)" value=""/>
+                    <Picker.Item label="Selecteer locatie (optioneel)" value="" style={styles.pickerContainer}/>
                     {locations.map((loc) => (
-                        <Picker.Item key={loc.id} label={loc.name} value={loc.id}/>
+                        <Picker.Item key={loc.id} label={loc.name} value={loc.id} style={styles.picker}/>
                     ))}
                 </Picker>
 
@@ -175,6 +174,7 @@ export default function MakeBlogScreen() {
                     style={[styles.input, {textAlignVertical: 'top'}]}
                     multiline={true}
                     scrollEnabled={true}
+                    placeholderTextColor={isDarkMode? "#fff": "#333"}
                 />
 
                 <TouchableOpacity
@@ -202,24 +202,24 @@ export default function MakeBlogScreen() {
                         <Text style={styles.buttonText}>Post</Text>
                     </TouchableOpacity>
                 )}
-
             </ScrollView>
         </SafeAreaView>
-
     )
-
-
 }
 
-const styles = StyleSheet.create({
+export const getStyles = (isDarkMode) => StyleSheet.create({
+    container:{
+      flex:1,
+      backgroundColor: isDarkMode? "#333": "#fff"
+    },
     header: {
         flexDirection: 'row',
         justifyContent: 'center',
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderColor: '#ddd',
-        backgroundColor: '#fff',
+        borderColor: isDarkMode? '#444' : '#ddd',
+        backgroundColor: isDarkMode? '#1a1a1a' : '#fff',
     },
     backButton: {
         paddingRight: 12,
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#222',
+        color: isDarkMode? '#fff' : '#222',
         textAlign: 'center'
     },
     content: {
@@ -240,13 +240,22 @@ const styles = StyleSheet.create({
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ccc',
+        borderColor: isDarkMode? '#555' : '#ccc',
         padding: 12,
         marginBottom: 15,
         borderRadius: 8,
         width: '100%',
         fontSize: 16,
-        backgroundColor: '#fafafa',
+        backgroundColor: isDarkMode? '#2a2a2a' : '#fafafa',
+        color: isDarkMode? '#fff' : '#000',
+    },
+    pickerContainer: {
+        backgroundColor: isDarkMode?"#201f1f": "#fff",
+        color: isDarkMode? "#fff": "#333",
+    },
+    picker: {
+        backgroundColor: isDarkMode?"#272626": "#fff",
+        color: isDarkMode? "#fff": "#333",
     },
     imageButton: {
         backgroundColor: '#0F948D',

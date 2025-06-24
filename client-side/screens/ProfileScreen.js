@@ -23,7 +23,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { deleteUser } from 'firebase/auth';
 import { useAuth } from "../auth/AuthContext";
 import {DarkModeContext} from "../Contexts/DarkModeContext";
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 export default function ProfileScreen() {
     const auth = useAuth();
@@ -209,6 +208,7 @@ export default function ProfileScreen() {
                                 placeholder={userData.full_name || ''}
                                 value={editedName}
                                 onChangeText={setEditedName}
+                                placeholderTextColor={isDarkMode? "#fff": "#333"}
                             />
                             <Text style={styles.label}>E-mail:</Text>
                             <TextInput
@@ -216,6 +216,7 @@ export default function ProfileScreen() {
                                 placeholder={userData.mail_address || ''}
                                 value={editedEmail}
                                 onChangeText={setEditedEmail}
+                                placeholderTextColor={isDarkMode? "#fff": "#333"}
                             />
                             <Text style={styles.label}>Wachtwoord:</Text>
                             <TextInput

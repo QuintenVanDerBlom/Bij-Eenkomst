@@ -76,9 +76,6 @@ export default function InfoScreen() {
                     </TouchableOpacity>
                 </View>
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <MaterialIcons name="arrow-back" size={28} color="#444" />
-                </TouchableOpacity>
                 <View style={styles.searchBar}>
                     <Searchbar />
                 </View>
@@ -117,7 +114,6 @@ export default function InfoScreen() {
                                     <Text style={styles.moreInfoLink}>Meer info ➔</Text>
                                 </TouchableOpacity>
                             </View>
-
                         ))
                     )}
                 </ScrollView>

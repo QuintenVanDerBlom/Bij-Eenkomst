@@ -16,7 +16,6 @@ const butterflyMarker = require('../assets/butterfly-marker.png');
 export default function MapScreen({ route }) {
     const { currentUser } = useAuth();
 
-
     const navigation = useNavigation();
     const { focusLocation } = route.params || {};
     const mapRef = useRef(null);
@@ -612,6 +611,7 @@ export default function MapScreen({ route }) {
                                     </View>
                                 )}
 
+                                {currentUser &&(
                                 <View>
                                     <Pressable
                                         style={[
@@ -627,7 +627,7 @@ export default function MapScreen({ route }) {
                                         </Text>
                                     </Pressable>
 
-                                </View>
+                                </View>)}
                             </View>
                         </ScrollView>
 
