@@ -14,12 +14,15 @@ import AppNavigator from '../navigation/AppNavigator';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebaseConfig'; // pas dit pad aan als nodig
+import { db, auth } from '../firebaseConfig'; // pas dit pad aan als nodig
+import { signOut } from 'firebase/auth';
+import { useAuth } from '../auth/AuthContext';
 
 
 export default function HomeScreen() {
     const navigation = useNavigation();
     const [fact, setFact] = useState('Even een feitje ophalen...');
+    const { currentUser, userData } = useAuth(); // Get authentication state
 
     useEffect(() => {
         const fetchFact = async () => {
@@ -44,6 +47,27 @@ export default function HomeScreen() {
 
         fetchFact();
     }, []);
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            Alert.alert('Uitgelogd', 'Je bent succesvol uitgelogd');
+        } catch (error) {
+            console.error('Logout error:', error);
+            Alert.alert('Fout', 'Er is een fout opgetreden bij uitloggen');
+        }
+    };
+
+    const confirmLogout = () => {
+        Alert.alert(
+            'Uitloggen',
+            'Weet je zeker dat je wilt uitloggen?',
+            [
+                { text: 'Annuleren', style: 'cancel' },
+                { text: 'Uitloggen', onPress: handleLogout, style: 'destructive' }
+            ]
+        );
+    };
 
 
     return (
