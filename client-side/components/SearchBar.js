@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import { View, TextInput, StyleSheet, FlatList, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function SearchBar() {
     const [search, setSearch] = useState('');
     const [entries, setEntries] = useState([]);
     const [filteredEntries, setFilteredEntries] = useState([]);
     const navigation = useNavigation();
+    const {isDarkMode} = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     // Data ophalen uit Firebase
     useEffect(() => {
@@ -92,6 +95,7 @@ export default function SearchBar() {
                 onChangeText={setSearch}
                 style={styles.searchInput}
                 clearButtonMode="while-editing"
+                placeholderTextColor={isDarkMode ? "#fff" : "#444"}
             />
             {filteredEntries.length > 0 && (
                 <FlatList
@@ -111,7 +115,7 @@ export default function SearchBar() {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
     container: {
         paddingHorizontal: 15,
         paddingTop: 10,
@@ -119,35 +123,36 @@ const styles = StyleSheet.create({
     },
     searchInput: {
         height: 40,
-        borderColor: '#ccc',
+        borderColor: isDarkMode ? '#555' : '#fff',
         borderWidth: 1,
         borderRadius: 20,
         paddingHorizontal: 15,
         fontSize: 16,
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#333' : '#fff',
+        color: isDarkMode ? '#fff' : '#000',
     },
     suggestionsList: {
         maxHeight: 200,
         marginTop: 5,
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#222' : '#fff',
         borderRadius: 10,
-        borderColor: '#ddd',
+        borderColor: isDarkMode ? '#444' : '#ddd',
         borderWidth: 1,
     },
     suggestionItem: {
         paddingVertical: 10,
         paddingHorizontal: 15,
-        borderBottomColor: '#eee',
+        borderBottomColor: isDarkMode ? '#444' : '#eee',
         borderBottomWidth: 1,
     },
     titleText: {
         fontSize: 16,
         fontWeight: '500',
-        color: '#222',
+        color: isDarkMode ? '#fff' : '#222',
     },
     metaText: {
         fontSize: 12,
-        color: '#888',
+        color: isDarkMode ? '#aaa' : '#888',
         marginTop: 2,
     },
 });
