@@ -24,6 +24,7 @@ export default function MapScreen({ route }) {
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [createModalVisible, setCreateModalVisible] = useState(false);
+    const [locationSaved, setLocationSaved] = useState(false);
 
     useEffect(() => {
         fetchLocations();
@@ -615,26 +616,21 @@ const styles = StyleSheet.create({
     headerButton: {
         backgroundColor: 'rgba(255,255,255,0.9)',
         borderRadius: 8,
-        padding: 8,
+        padding: 6,
         flexDirection: 'row',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    listButton: {
-        backgroundColor: 'rgba(255, 215, 0, 0.9)', // Yellow background for list button
-    },
-    headerButtonText: {
-        marginLeft: 6,
-        fontSize: 16,
-        color: '#333',
-        fontWeight: '500',
     },
     map: {
         ...StyleSheet.absoluteFillObject,
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    backText: {
+        marginLeft: 6,
+        fontSize: 16,
+        color: '#333',
     },
     // Custom marker container and image - TERUG NAAR ORIGINELE GROOTTE
     markerContainer: {

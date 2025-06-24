@@ -20,6 +20,10 @@ export default function AppNavigator() {
                 <Icon name="map-pin" size={32} color="#000" />
             </TouchableOpacity>
 
+            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Profile')}>
+                <Icon name="user" size={32} color="#000" />
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Blog')}>
                 <Icon name="book" size={32} color="#000" />
             </TouchableOpacity>
