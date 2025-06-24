@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
     View,
     Text,
@@ -15,6 +15,7 @@ import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
 import { db } from "../firebaseConfig";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function SubInfoScreen() {
     const route = useRoute();
@@ -25,6 +26,8 @@ export default function SubInfoScreen() {
     const [subcategory, setSubcategory] = useState(null);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(null);
+    const {isDarkMode} = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     useEffect(() => {
         const loadData = async () => {
@@ -62,84 +65,91 @@ export default function SubInfoScreen() {
     }
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+        <SafeAreaView style={{ flex: 1 }}>
             <HeaderBar />
 
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <MaterialIcons name="arrow-back" size={28} color="#444" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>{subcategory?.name || 'Subcategorie Info'}</Text>
-            </View>
+            <ScrollView style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <MaterialIcons name="arrow-back" size={28} color={isDarkMode? "#fff": "#444"}/>
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>{subcategory?.name || 'Subcategorie Info'}</Text>
+                </View>
 
-            {subcategory?.description && (
-                <Text style={styles.subcategoryDescription}>{subcategory.description}</Text>
-            )}
-
-            <ScrollView contentContainerStyle={styles.container}>
-                {entries.length === 0 ? (
-                    <Text>Geen entries gevonden voor deze subcategorie.</Text>
-                ) : (
-                    entries.map((entry, index) => (
-                        <View key={entry.id} style={styles.accordionItem}>
-
-                            {/* Accordion header: alleen titel + icoon */}
-                            <TouchableOpacity
-                                style={styles.accordionHeader}
-                                onPress={() => toggleExpand(index)}
-                            >
-                                <Text style={styles.accordionTitle}>{entry.title}</Text>
-                                <MaterialIcons
-                                    name={expanded === index ? 'expand-less' : 'expand-more'}
-                                    size={24}
-                                    color="#444"
-                                />
-                            </TouchableOpacity>
-
-                            {/* Accordion content: wordt alleen gerenderd als expanded */}
-                            {expanded === index && (
-                                <View style={styles.accordionContent}>
-
-                                    {/* Image alleen tonen als head_image bestaat en een geldige URL is */}
-                                    {entry.head_image &&
-                                        typeof entry.head_image === 'string' &&
-                                        entry.head_image.startsWith('http') && (
-                                            <Image
-                                                source={{ uri: entry.head_image }}
-                                                style={styles.image}
-                                                resizeMode="contain"
-                                                onError={(error) => {
-                                                    console.warn('Afbeelding kon niet worden geladen:', entry.head_image, error.nativeEvent);
-                                                }}
-                                            />
-                                        )}
-
-                                    <Text style={styles.label}>Beschrijving:</Text>
-                                    <Text style={styles.text}>{entry.description}</Text>
-
-                                    <Text style={styles.label}>Extra informatie:</Text>
-                                    <Text style={styles.text}>{entry.information}</Text>
-                                </View>
-                            )}
-                        </View>
-                    ))
+                {subcategory?.description && (
+                    <Text style={styles.subcategoryDescription}>{subcategory.description}</Text>
                 )}
-            </ScrollView>
 
+                <ScrollView contentContainerStyle={styles.container}>
+                    {entries.length === 0 ? (
+                        <Text>Geen entries gevonden voor deze subcategorie.</Text>
+                    ) : (
+                        entries.map((entry, index) => (
+                            <View key={entry.id} style={styles.accordionItem}>
+
+                                {/* Accordion header: alleen titel + icoon */}
+                                <TouchableOpacity
+                                    style={styles.accordionHeader}
+                                    onPress={() => toggleExpand(index)}
+                                >
+                                    <Text style={styles.accordionTitle}>{entry.title}</Text>
+                                    <MaterialIcons
+                                        name={expanded === index ? 'expand-less' : 'expand-more'}
+                                        size={24}
+                                        color="#444"
+                                    />
+                                </TouchableOpacity>
+
+                                {/* Accordion content: wordt alleen gerenderd als expanded */}
+                                {expanded === index && (
+                                    <View style={styles.accordionContent}>
+
+                                        {/* Image alleen tonen als head_image bestaat en een geldige URL is */}
+                                        {entry.head_image &&
+                                            typeof entry.head_image === 'string' &&
+                                            entry.head_image.startsWith('http') && (
+                                                <Image
+                                                    source={{ uri: entry.head_image }}
+                                                    style={styles.image}
+                                                    resizeMode="contain"
+                                                    onError={(error) => {
+                                                        console.warn('Afbeelding kon niet worden geladen:', entry.head_image, error.nativeEvent);
+                                                    }}
+                                                />
+                                            )}
+
+                                        <Text style={styles.label}>Beschrijving:</Text>
+                                        <Text style={styles.text}>{entry.description}</Text>
+
+                                        <Text style={styles.label}>Extra informatie:</Text>
+                                        <Text style={styles.text}>{entry.information}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        ))
+                    )}
+                </ScrollView>
+                <View style={styles.filler}></View>
+            </ScrollView>
             <AppNavigator />
         </SafeAreaView>
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
+    container: {
+        padding: 20,
+        backgroundColor: isDarkMode ? '#121212' : '#fff',
+        flex:1
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderColor: '#ddd',
-        backgroundColor: '#fff',
+        borderColor: isDarkMode ? '#333' : '#ddd',
+        backgroundColor: isDarkMode ? '#1c1c1c' : '#fff',
     },
     backButton: {
         paddingRight: 12,
@@ -148,25 +158,22 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#222',
+        color: isDarkMode ? '#fff' : '#222',
     },
     subcategoryDescription: {
         fontSize: 16,
-        color: '#666',
+        color: isDarkMode ? '#ccc' : '#555',
         textAlign: 'center',
         marginHorizontal: 20,
         marginBottom: 10,
-        marginTop: 5,
-    },
-    container: {
-        padding: 20,
+        paddingTop: 20
     },
     accordionItem: {
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#ccc',
+        borderColor: isDarkMode ? '#444' : '#ccc',
         borderRadius: 8,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: isDarkMode ? '#1e1e1e' : '#f9f9f9',
     },
     accordionHeader: {
         flexDirection: 'row',
@@ -177,8 +184,8 @@ const styles = StyleSheet.create({
     accordionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#333',
-        flex: 1, // neemt ruimte tussen titel en icon
+        color: isDarkMode ? '#fff' : '#333',
+        flex: 1,
     },
     accordionContent: {
         paddingHorizontal: 14,
@@ -189,15 +196,19 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: 8,
         marginBottom: 10,
-        backgroundColor: '#eee', // tijdelijke achtergrond om ruimte te tonen
+        backgroundColor: isDarkMode ? '#333' : '#eee',
     },
     label: {
         fontWeight: 'bold',
         marginTop: 10,
-        color: '#444',
+        color: isDarkMode ? '#ddd' : '#444',
     },
     text: {
-        color: '#555',
+        color: isDarkMode ? '#ccc' : '#555',
         lineHeight: 20,
     },
+    filler:{
+        paddingTop: 70,
+        paddingBottom: 10
+    }
 });

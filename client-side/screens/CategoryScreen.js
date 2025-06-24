@@ -19,9 +19,9 @@ export default function CategoryScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.container}>
                 {/* Headerbar bovenaan */}
                 <HeaderBar />
+            <View style={styles.container}>
 
                 {/* Searchbar Component */}
                 <Searchbar />

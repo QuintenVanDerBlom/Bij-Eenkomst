@@ -123,7 +123,7 @@ const getStyles = (isDarkMode) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: isDarkMode ? '#121212' : '#fff',
-        paddingBottom: 150
+        paddingBottom: 15
     },
     header: {
         paddingHorizontal: 16,
