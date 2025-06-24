@@ -1,25 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert, Modal, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
 import { Ionicons } from '@expo/vector-icons';
-import { db } from '../firebaseConfig';
-import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 
-const beeMarker = require('../assets/bee-marker.png');
-const butterflyMarker = require('../assets/butterfly-marker.png');
+const API_URL = 'http://145.24.223.126:5000/api/locations';
 
-export default function MapScreen({ route }) {
+export default function MapScreen() {
     const navigation = useNavigation();
-    const { focusLocation } = route.params || {};
-    const mapRef = useRef(null);
-
     const [pins, setPins] = useState([]);
     const [newPin, setNewPin] = useState(null);
     const [pinTitle, setPinTitle] = useState('');
-    const [pinDescription, setPinDescription] = useState('');
-    const [pinType, setPinType] = useState('bee'); // Default to bee
     const [editingPin, setEditingPin] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState(null);
@@ -29,29 +21,12 @@ export default function MapScreen({ route }) {
         fetchLocations();
     }, []);
 
-    // Focus op de geselecteerde locatie wanneer deze wordt doorgegeven
-    useEffect(() => {
-        if (focusLocation && mapRef.current) {
-            // Focus op de geselecteerde locatie
-            setTimeout(() => {
-                mapRef.current.animateToRegion({
-                    latitude: focusLocation.latitude,
-                    longitude: focusLocation.longitude,
-                    latitudeDelta: 0.005,
-                    longitudeDelta: 0.005,
-                }, 1000);
-            }, 500);
-        }
-    }, [focusLocation]);
-
     const fetchLocations = async () => {
         try {
-            const querySnapshot = await getDocs(collection(db, 'locations'));
-            const locations = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setPins(locations);
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error('Failed to fetch locations');
+            const data = await response.json();
+            setPins(data);
         } catch (error) {
             console.error('Error fetching locations:', error);
             Alert.alert('Error', 'Failed to fetch locations');
@@ -62,35 +37,30 @@ export default function MapScreen({ route }) {
         const { latitude, longitude } = e.nativeEvent.coordinate;
         setNewPin({ latitude, longitude });
         setPinTitle('');
-        setPinDescription('');
-        setPinType('bee'); // Reset to default
-        setCreateModalVisible(true);
+        setEditingPin(null);
     };
 
     const addPin = async () => {
         if (newPin && pinTitle) {
             try {
                 const newLocation = {
-                    latitude: newPin.latitude,
-                    longitude: newPin.longitude,
-                    name: pinTitle,
-                    description: pinDescription,
-                    type: pinType, // Add type field
-                    user_id: "SOXmjhQBfQMFjJKJlGBKlKF2CJH2"
+                    lat: newPin.latitude,
+                    lon: newPin.longitude,
+                    title: pinTitle
                 };
-
-                const docRef = await addDoc(collection(db, 'locations'), newLocation);
-                const addedLocation = {
-                    id: docRef.id,
-                    ...newLocation
-                };
-
-                setPins(prevPins => [...prevPins, addedLocation]);
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newLocation),
+                });
+                if (!response.ok) throw new Error('Failed to add location');
+                const data = await response.json();
+                setPins(prevPins => [...prevPins, data]);
                 setNewPin(null);
                 setPinTitle('');
-                setPinDescription('');
-                setPinType('bee');
-                setCreateModalVisible(false);
             } catch (error) {
                 console.error('Error adding location:', error);
                 Alert.alert('Error', 'Failed to add location');
@@ -98,51 +68,36 @@ export default function MapScreen({ route }) {
         }
     };
 
-    const cancelCreatePin = () => {
-        setNewPin(null);
-        setPinTitle('');
-        setPinDescription('');
-        setPinType('bee');
-        setCreateModalVisible(false);
-    };
-
     const handlePinPress = (pin) => {
-        setSelectedLocation(pin);
-        setModalVisible(true);
-    };
-
-    const startEditing = () => {
-        setEditingPin(selectedLocation);
-        setPinTitle(selectedLocation.name);
-        setPinDescription(selectedLocation.description || '');
-        setPinType(selectedLocation.type || 'bee');
-        setModalVisible(false);
-        setSelectedLocation(null);
+        setEditingPin(pin);
+        setPinTitle(pin.title);
+        setNewPin(null);
     };
 
     const updatePin = async () => {
         if (editingPin && pinTitle) {
             try {
                 const updatedLocation = {
-                    latitude: editingPin.latitude,
-                    longitude: editingPin.longitude,
-                    name: pinTitle,
-                    description: pinDescription,
-                    type: pinType,
-                    user_id: editingPin.user_id
+                    ...editingPin,
+                    title: pinTitle
                 };
-
-                await updateDoc(doc(db, 'locations', editingPin.id), updatedLocation);
-
-                setPins(prevPins =>
-                    prevPins.map(pin =>
-                        pin.id === editingPin.id ? { ...updatedLocation, id: editingPin.id } : pin
+                
+                const response = await fetch(`${API_URL}/${editingPin.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedLocation),
+                });
+                if (!response.ok) throw new Error('Failed to update location');
+                const data = await response.json();
+                setPins(prevPins => 
+                    prevPins.map(pin => 
+                        pin.id === editingPin.id ? data : pin
                     )
                 );
                 setEditingPin(null);
                 setPinTitle('');
-                setPinDescription('');
-                setPinType('bee');
             } catch (error) {
                 console.error('Error updating location:', error);
                 Alert.alert('Error', 'Failed to update location');
@@ -162,12 +117,16 @@ export default function MapScreen({ route }) {
                         style: 'destructive',
                         onPress: async () => {
                             try {
-                                await deleteDoc(doc(db, 'locations', editingPin.id));
+                                const response = await fetch(`${API_URL}/${editingPin.id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                });
+                                if (!response.ok) throw new Error('Failed to delete location');
                                 setPins(prevPins => prevPins.filter(pin => pin.id !== editingPin.id));
                                 setEditingPin(null);
                                 setPinTitle('');
-                                setPinDescription('');
-                                setPinType('bee');
                             } catch (error) {
                                 console.error('Error deleting location:', error);
                                 Alert.alert('Error', 'Failed to delete location');
@@ -177,11 +136,6 @@ export default function MapScreen({ route }) {
                 ]
             );
         }
-    };
-
-    // Function to get the appropriate marker image
-    const getMarkerImage = (type) => {
-        return type === 'butterfly' ? butterflyMarker : beeMarker;
     };
 
     return (
@@ -196,11 +150,10 @@ export default function MapScreen({ route }) {
 
             {/* Map */}
             <MapView
-                ref={mapRef}
                 style={styles.map}
                 initialRegion={{
-                    latitude: focusLocation?.latitude || 51.9225,
-                    longitude: focusLocation?.longitude || 4.47917,
+                    latitude: 51.9225,
+                    longitude: 4.47917,
                     latitudeDelta: 0.01,
                     longitudeDelta: 0.01,
                 }}
@@ -209,379 +162,60 @@ export default function MapScreen({ route }) {
                 {pins.map((pin) => (
                     <Marker
                         key={pin.id}
-                        coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
-                        title={pin.name}
+                        coordinate={{ latitude: pin.lat, longitude: pin.lon }}
+                        title={pin.title}
                         onPress={() => handlePinPress(pin)}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        centerOffset={{ x: 0, y: 0 }}
-                    >
-                        <View style={styles.markerContainer}>
-                            <Image
-                                source={getMarkerImage(pin.type)}
-                                style={styles.markerImage}
-                            />
-                        </View>
-                    </Marker>
+                    />
                 ))}
                 {newPin && (
                     <Marker
                         key="new-pin"
                         coordinate={newPin}
                         title="Nieuwe locatie"
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        centerOffset={{ x: 0, y: 0 }}
-                    >
-                        <View style={styles.markerContainer}>
-                            <Image
-                                source={getMarkerImage(pinType)}
-                                style={styles.markerImage}
-                            />
-                        </View>
-                    </Marker>
+                        pinColor="blue"
+                    />
                 )}
             </MapView>
 
-            {/* Modern Edit Modal */}
-            {editingPin && (
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={!!editingPin}
-                    onRequestClose={() => setEditingPin(null)}
-                >
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                        style={styles.modalKeyboardAvoidingView}
-                    >
-                        <View style={styles.modernModalOverlay}>
-                            <View style={styles.modernModalContainer}>
-                                {/* Close button */}
-                                <TouchableOpacity
-                                    style={styles.closeButton}
-                                    onPress={() => {
-                                        setEditingPin(null);
-                                        setPinTitle('');
-                                        setPinDescription('');
-                                        setPinType('bee');
-                                    }}
-                                >
-                                    <Ionicons name="close" size={24} color="#666" />
-                                </TouchableOpacity>
-
-                                {/* Content */}
-                                <ScrollView style={styles.modernModalContent} showsVerticalScrollIndicator={false}>
-                                    {/* Title */}
-                                    <Text style={styles.modernModalTitle}>Locatie Bewerken</Text>
-
-                                    {/* Input section */}
-                                    <View style={styles.detailsSection}>
-                                        <View style={styles.detailRow}>
-                                            <View style={styles.detailIconContainer}>
-                                                <Ionicons name="create-outline" size={20} color="#291700" />
-                                            </View>
-                                            <View style={styles.detailTextContainer}>
-                                                <Text style={styles.detailLabel}>Naam</Text>
-                                                <TextInput
-                                                    style={styles.modernInput}
-                                                    placeholder="Wijzig locatie naam"
-                                                    onChangeText={(text) => setPinTitle(text)}
-                                                    value={pinTitle}
-                                                />
-                                            </View>
-                                        </View>
-
-                                        <View style={styles.detailRow}>
-                                            <View style={styles.detailIconContainer}>
-                                                <Ionicons name="document-text-outline" size={20} color="#291700" />
-                                            </View>
-                                            <View style={styles.detailTextContainer}>
-                                                <Text style={styles.detailLabel}>Beschrijving</Text>
-                                                <TextInput
-                                                    style={[styles.modernInput, styles.modernTextArea]}
-                                                    placeholder="Wijzig beschrijving"
-                                                    onChangeText={(text) => setPinDescription(text)}
-                                                    value={pinDescription}
-                                                    multiline
-                                                    numberOfLines={4}
-                                                />
-                                            </View>
-                                        </View>
-
-                                        {/* Type selector */}
-                                        <View style={styles.detailRow}>
-                                            <View style={styles.detailIconContainer}>
-                                                <Ionicons name="options-outline" size={20} color="#291700" />
-                                            </View>
-                                            <View style={styles.detailTextContainer}>
-                                                <Text style={styles.detailLabel}>Type</Text>
-                                                <View style={styles.typeSelector}>
-                                                    <TouchableOpacity
-                                                        style={[
-                                                            styles.typeButton,
-                                                            pinType === 'bee' && styles.typeButtonActive
-                                                        ]}
-                                                        onPress={() => setPinType('bee')}
-                                                    >
-                                                        <Text style={[
-                                                            styles.typeButtonText,
-                                                            pinType === 'bee' && styles.typeButtonTextActive
-                                                        ]}>🐝 Bij</Text>
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity
-                                                        style={[
-                                                            styles.typeButton,
-                                                            pinType === 'butterfly' && styles.typeButtonActive
-                                                        ]}
-                                                        onPress={() => setPinType('butterfly')}
-                                                    >
-                                                        <Text style={[
-                                                            styles.typeButtonText,
-                                                            pinType === 'butterfly' && styles.typeButtonTextActive
-                                                        ]}>🦋 Vlinder</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </View>
-                                        </View>
-                                    </View>
-                                </ScrollView>
-
-                                {/* Action buttons */}
-                                <View style={styles.modernModalButtonContainer}>
-                                    <TouchableOpacity
-                                        style={[styles.modernButton, styles.modernDeleteButton]}
-                                        onPress={deletePin}
-                                    >
-                                        <Ionicons name="trash-outline" size={20} color="white" />
-                                        <Text style={styles.modernButtonTextWhite}>Verwijderen</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={styles.modernEditButton}
-                                        onPress={updatePin}
-                                    >
-                                        <Ionicons name="checkmark-outline" size={20} color="black" />
-                                        <Text style={styles.modernButtonText}>Bijwerken</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                    </KeyboardAvoidingView>
-                </Modal>
-            )}
-
-            {/* Modern Create Modal */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={createModalVisible}
-                onRequestClose={() => setCreateModalVisible(false)}
-            >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.modalKeyboardAvoidingView}
-                >
-                    <View style={styles.modernModalOverlay}>
-                        <View style={styles.modernModalContainer}>
-                            {/* Close button */}
-                            <TouchableOpacity
-                                style={styles.closeButton}
-                                onPress={cancelCreatePin}
-                            >
-                                <Ionicons name="close" size={24} color="#666" />
-                            </TouchableOpacity>
-
-                            {/* Content */}
-                            <ScrollView style={styles.modernModalContent} showsVerticalScrollIndicator={false}>
-                                {/* Title */}
-                                <Text style={styles.modernModalTitle}>Nieuwe Locatie</Text>
-
-                                {/* Details section */}
-                                <View style={styles.detailsSection}>
-                                    <View style={styles.detailRow}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="location-outline" size={20} color="#291700" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Coördinaten</Text>
-                                            <Text style={styles.detailValue}>
-                                                {newPin?.latitude?.toFixed(6)}, {newPin?.longitude?.toFixed(6)}
-                                            </Text>
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.detailRow}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="create-outline" size={20} color="#291700" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Naam</Text>
-                                            <TextInput
-                                                style={styles.modernInput}
-                                                placeholder="Naam van de locatie"
-                                                onChangeText={(text) => setPinTitle(text)}
-                                                value={pinTitle}
-                                            />
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.detailRow}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="document-text-outline" size={20} color="#291700" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Beschrijving</Text>
-                                            <TextInput
-                                                style={[styles.modernInput, styles.modernTextArea]}
-                                                placeholder="Beschrijving (optioneel)"
-                                                onChangeText={(text) => setPinDescription(text)}
-                                                value={pinDescription}
-                                                multiline
-                                                numberOfLines={4}
-                                            />
-                                        </View>
-                                    </View>
-
-                                    {/* Type selector */}
-                                    <View style={styles.detailRow}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="options-outline" size={20} color="#291700" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Type</Text>
-                                            <View style={styles.typeSelector}>
-                                                <TouchableOpacity
-                                                    style={[
-                                                        styles.typeButton,
-                                                        pinType === 'bee' && styles.typeButtonActive
-                                                    ]}
-                                                    onPress={() => setPinType('bee')}
-                                                >
-                                                    <Text style={[
-                                                        styles.typeButtonText,
-                                                        pinType === 'bee' && styles.typeButtonTextActive
-                                                    ]}>🐝 Bij</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity
-                                                    style={[
-                                                        styles.typeButton,
-                                                        pinType === 'butterfly' && styles.typeButtonActive
-                                                    ]}
-                                                    onPress={() => setPinType('butterfly')}
-                                                >
-                                                    <Text style={[
-                                                        styles.typeButtonText,
-                                                        pinType === 'butterfly' && styles.typeButtonTextActive
-                                                    ]}>🦋 Vlinder</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </View>
-                                    </View>
-                                </View>
-                            </ScrollView>
-
-                            {/* Action buttons */}
-                            <View style={styles.modernModalButtonContainer}>
-                                <TouchableOpacity
-                                    style={styles.modernEditButton}
-                                    onPress={addPin}
-                                    disabled={!pinTitle}
-                                >
-                                    <Ionicons name="add-outline" size={20} color="black" />
-                                    <Text style={styles.modernButtonText}>Toevoegen</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
-
-            {/* Modern Details Modal */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modernModalOverlay}>
-                    <View style={styles.modernModalContainer}>
-                        {/* Close button */}
-                        <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={() => setModalVisible(false)}
+            {/* Input for new/edit pin */}
+            {(newPin || editingPin) && (
+                <View style={styles.pinInputContainer}>
+                    <TextInput
+                        style={styles.pinInput}
+                        placeholder={editingPin ? "Wijzig locatie naam" : "Voer een naam in voor de nieuwe locatie"}
+                        onChangeText={(text) => setPinTitle(text)}
+                        value={pinTitle}
+                    />
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity 
+                            style={[styles.pinButton, styles.cancelButton]} 
+                            onPress={() => {
+                                setNewPin(null);
+                                setEditingPin(null);
+                                setPinTitle('');
+                            }}
                         >
-                            <Ionicons name="close" size={24} color="#666" />
+                            <Text style={styles.pinButtonText}>Annuleren</Text>
                         </TouchableOpacity>
-                        {/* Content */}
-                        <ScrollView style={styles.modernModalContent} showsVerticalScrollIndicator={false}>
-                            {/* Title */}
-                            <Text style={styles.modernModalTitle}>{selectedLocation?.name}</Text>
-
-                            {/* Details section */}
-                            <View style={styles.detailsSection}>
-                                <View style={styles.detailRow}>
-                                    <View style={styles.detailIconContainer}>
-                                        <Ionicons name="location-outline" size={20} color="#291700" />
-                                    </View>
-                                    <View style={styles.detailTextContainer}>
-                                        <Text style={styles.detailLabel}>Coördinaten</Text>
-                                        <Text style={styles.detailValue}>
-                                            {selectedLocation?.latitude?.toFixed(6)}, {selectedLocation?.longitude?.toFixed(6)}
-                                        </Text>
-                                    </View>
-                                </View>
-
-                                {selectedLocation?.type && (
-                                    <View style={styles.detailRow}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="options-outline" size={20} color="#291700" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Type</Text>
-                                            <Text style={styles.detailValue}>
-                                                {selectedLocation.type === 'butterfly' ? '🦋 Vlinder' : '🐝 Bij'}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                )}
-
-                                {selectedLocation?.description && (
-                                    <View style={styles.detailRow}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="document-text-outline" size={20} color="#291700" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Beschrijving</Text>
-                                            <Text style={styles.detailValue}>{selectedLocation.description}</Text>
-                                        </View>
-                                    </View>
-                                )}
-
-                                {selectedLocation?.user_id && (
-                                    <View style={styles.detailRow}>
-                                        <View style={styles.detailIconContainer}>
-                                            <Ionicons name="person-outline" size={20} color="#291700" />
-                                        </View>
-                                        <View style={styles.detailTextContainer}>
-                                            <Text style={styles.detailLabel}>Eigenaar ID</Text>
-                                            <Text style={styles.detailValue}>{selectedLocation.user_id}</Text>
-                                        </View>
-                                    </View>
-                                )}
-                            </View>
-                        </ScrollView>
-
-                        {/* Action buttons */}
-                        <View style={styles.modernModalButtonContainer}>
-                            <TouchableOpacity
-                                style={styles.modernEditButton}
-                                onPress={startEditing}
+                        {editingPin && (
+                            <TouchableOpacity 
+                                style={[styles.pinButton, styles.deleteButton]} 
+                                onPress={deletePin}
                             >
-                                <Ionicons name="create-outline" size={20} color="black" />
-                                <Text style={styles.modernButtonText}>Bewerken</Text>
+                                <Text style={styles.pinButtonText}>Verwijderen</Text>
                             </TouchableOpacity>
-                        </View>
+                        )}
+                        <TouchableOpacity 
+                            style={[styles.pinButton, styles.saveButton]} 
+                            onPress={editingPin ? updatePin : addPin}
+                        >
+                            <Text style={styles.pinButtonText}>
+                                {editingPin ? 'Bijwerken' : 'Voeg toe'}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
-            </Modal>
+            )}
 
             {/* Bottom navigation */}
             <AppNavigator />
@@ -608,67 +242,11 @@ const styles = StyleSheet.create({
     map: {
         ...StyleSheet.absoluteFillObject,
     },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    backText: {
-        marginLeft: 6,
-        fontSize: 16,
-        color: '#333',
-    },
-    // Custom marker container and image - TERUG NAAR ORIGINELE GROOTTE
-    markerContainer: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'visible',
-    },
-    markerImage: {
-        width: 40,
-        height: 40,
-        resizeMode: 'contain',
-    },
-    modalKeyboardAvoidingView: {
-        flex: 1,
-    },
-    // Type selector styles
-    typeSelector: {
-        flexDirection: 'row',
-        marginTop: 8,
-        gap: 8,
-    },
-    typeButton: {
-        flex: 1,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        backgroundColor: '#f9f9f9',
-        alignItems: 'center',
-    },
-    typeButtonActive: {
-        backgroundColor: '#FFD700',
-        borderColor: '#FFD700',
-    },
-    typeButtonText: {
-        fontSize: 16,
-        color: '#666',
-        fontWeight: '500',
-    },
-    typeButtonTextActive: {
-        color: '#000',
-        fontWeight: '600',
-    },
-    // Modern modal styles - consistent across all modals
-    modernModalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.1)',
-        justifyContent: 'flex-end',
-    },
-    modernModalContainer: {
+    pinInputContainer: {
+        position: 'absolute',
+        bottom: 100,
+        left: 20,
+        right: 20,
         backgroundColor: 'white',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
@@ -712,7 +290,7 @@ const styles = StyleSheet.create({
     },
     detailRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center', // Changed from 'flex-start' to 'center' for better alignment
         marginBottom: 25,
         paddingVertical: 6,
     },
@@ -723,35 +301,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF8DC',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 18,
-        marginTop: 0,
     },
-    detailTextContainer: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    detailLabel: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#666',
-        marginBottom: 6,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    detailValue: {
-        fontSize: 18,
-        color: '#1a1a1a',
-        lineHeight: 26,
-    },
-    modernInput: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        padding: 12,
+    backText: {
+        marginLeft: 6,
         fontSize: 16,
-        backgroundColor: '#f9f9f9',
-        marginTop: 4,
-        minHeight: 44,
+        color: '#333',
     },
     modernTextArea: {
         height: 100,
