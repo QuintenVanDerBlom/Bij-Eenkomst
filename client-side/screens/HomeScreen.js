@@ -7,6 +7,7 @@ import {
     ImageBackground,
     TouchableOpacity,
     Image,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -95,11 +96,6 @@ export default function HomeScreen() {
                     {currentUser ? (
                         // Show logout button and welcome message when logged in
                         <View style={styles.loggedInContainer}>
-                            {userData && (
-                                <Text style={styles.welcomeText}>
-                                    Welkom, {userData.full_name}!
-                                </Text>
-                            )}
                             <TouchableOpacity
                                 style={[styles.authButton, styles.logoutButton]}
                                 onPress={confirmLogout}
@@ -123,7 +119,7 @@ export default function HomeScreen() {
                                 style={[styles.authButton, styles.registerButton]}
                                 onPress={() => navigation.navigate('Register')}
                             >
-                                <Text style={styles.authButtonText}>Registreren</Text>
+                                <Text style={styles.registerButton}>Registreren</Text>
                             </TouchableOpacity>
                         </>
                     )}
@@ -183,13 +179,15 @@ const styles = StyleSheet.create({
     },
     // Auth buttons container
     authButtonsContainer: {
-        position: 'absolute',
-        top: 20,
-        right: 16,
         flexDirection: 'row',
-        gap: 8,
+        justifyContent: 'flex-end',
         alignItems: 'center',
+        gap: 8,
+        marginTop: 8,
+        paddingHorizontal: 16,
     },
+
+
     // Logged in container
     loggedInContainer: {
         alignItems: 'flex-end',
@@ -206,25 +204,32 @@ const styles = StyleSheet.create({
         textAlign: 'right',
     },
     authButton: {
-        backgroundColor: 'rgba(255, 215, 0, 0.9)',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#ffd700',
-    },
+            backgroundColor: 'rgba(255, 215, 0, 0.9)',
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 20,
+            borderWidth: 1,
+            borderColor: '#ffd700',
+            color: '#000',
+        },
     registerButton: {
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        borderColor: '#ffd700',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            color: '#ffd700',
+            fontSize: 14,
+            fontWeight: '600',
+            borderColor: '#ffd700',
     },
+
+    registerButtonText: {
+        color: '#ffd700',
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+
     logoutButton: {
         backgroundColor: 'rgba(220, 20, 60, 0.9)', // Crimson red
         borderColor: '#dc143c',
-    },
-    authButtonText: {
-        color: '#444',
-        fontSize: 14,
-        fontWeight: '600',
     },
     logoutButtonText: {
         color: '#fff', // White text for logout button
@@ -233,7 +238,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 80,
         marginBottom: 80,
         paddingHorizontal: 20,
     },

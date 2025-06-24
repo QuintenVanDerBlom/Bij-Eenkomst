@@ -22,9 +22,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { deleteUser } from 'firebase/auth';
 import { useAuth } from "../auth/AuthContext";
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 export default function ProfileScreen() {
-    const { currentUser, userData, loading  } = useAuth();
+    const auth = useAuth();
     const [editedName, setEditedName] = useState('');
     const [editedEmail, setEditedEmail] = useState('');
     const [editedPassword, setEditedPassword] = useState('');
@@ -34,20 +35,27 @@ export default function ProfileScreen() {
     const [darkMode, setDarkMode] = useState(null);
     const navigation = useNavigation();
 
-    const auth = useAuth();
+    // Handle loading state
+    if (auth.loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
+
+    const { currentUser, userData, loading } = auth;
 
     useEffect(() => {
-        if (auth.loading) return; // Wacht tot de auth-status geladen is
-        if (!currentUser) {
+        if (!auth.isAuthenticated) {
             navigation.navigate('Login');
         }
-    }, [currentUser, auth.loading]);
+    }, [auth.isAuthenticated]);
 
     useEffect(() => {
-        if (userData) {
-            setEditedName(userData.full_name || '');
-            setEditedEmail(userData.mail_adress || '');
-        }
+        if (!userData) return;
+        setEditedName(userData.full_name || '');
+        setEditedEmail(userData.mail_adress || '');
     }, [userData]);
 
     const updateUserData = async () => {

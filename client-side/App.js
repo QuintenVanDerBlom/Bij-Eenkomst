@@ -13,10 +13,8 @@ import LocationDetailScreen from "./screens/LocationDetailScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 // import AdminScreen from "./screens/AdminScreen";
 import TestMarijn from "./screens/TestMarijn";
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import BlogScreen from "./screens/BlogScreen";
 import MakeBlogScreen from "./screens/MakeBlogScreen";
-
 
 const Stack = createNativeStackNavigator();
 
