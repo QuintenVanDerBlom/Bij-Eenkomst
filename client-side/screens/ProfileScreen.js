@@ -153,7 +153,11 @@ export default function ProfileScreen() {
                     <View style={styles.passwordRow}>
                         <Text style={styles.cardText}>{showPassword ? userData.password : '********'}</Text>
                         <Pressable onPress={() => setShowPassword(!showPassword)}>
-                            <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} />
+                            <Feather
+                                name={showPassword ? 'eye-off' : 'eye'}
+                                size={18}
+                                color={isDarkMode ? '#fff' : '#000'}
+                            />
                         </Pressable>
                     </View>
                 </View>
@@ -191,21 +195,21 @@ export default function ProfileScreen() {
                         <View style={styles.modalContainer}>
                             <Text style={styles.modalTitle}>Profiel aanpassen</Text>
 
-                            <Text>Naam:</Text>
+                            <Text style={styles.label}>Naam:</Text>
                             <TextInput
                                 style={styles.input}
                                 placeholder={userData.full_name || ''}
                                 value={editedName}
                                 onChangeText={setEditedName}
                             />
-                            <Text>E-mail:</Text>
+                            <Text style={styles.label}>E-mail:</Text>
                             <TextInput
                                 style={styles.input}
                                 placeholder={userData.mail_address || ''}
                                 value={editedEmail}
                                 onChangeText={setEditedEmail}
                             />
-                            <Text>Wachtwoord:</Text>
+                            <Text style={styles.label}>Wachtwoord:</Text>
                             <TextInput
                                 style={styles.input}
                                 secureTextEntry
@@ -348,6 +352,9 @@ const getStyles = (isDarkMode) => StyleSheet.create({
         padding: 10,
         marginVertical: 5,
         backgroundColor: isDarkMode ? '#444' : '#fff',
+        color: isDarkMode ? '#fff' : '#000',
+    },
+    label: {
         color: isDarkMode ? '#fff' : '#000',
     },
     saveButton: {

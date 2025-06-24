@@ -1,10 +1,9 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import {
     ScrollView,
     View,
     StyleSheet,
     Text,
-    TouchableOpacity, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,39 +11,46 @@ import CategoryButton from '../components/CategoryCard';
 import AppNavigator from '../navigation/AppNavigator';
 import Searchbar from '../components/SearchBar';
 import HeaderBar from '../navigation/HeaderBar';
-import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons';
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function CategoryScreen() {
-    const navigation = useNavigation();
+    const { isDarkMode } = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     return (
-        <SafeAreaView style={{ flex: 1 }}>
-            {/* Headerbar bovenaan */}
-            <HeaderBar />
+        <SafeAreaView style={styles.container}>
+            <View style={styles.container}>
+                {/* Headerbar bovenaan */}
+                <HeaderBar />
 
-            {/* Searchbar Component */}
-            <Searchbar />
+                {/* Searchbar Component */}
+                <Searchbar />
 
-            {/* Category cards */}
-            <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.subtitle}>Kies je categorie</Text>
+                {/* Category cards */}
+                <ScrollView contentContainerStyle={styles.scrollView}>
+                    <Text style={styles.subtitle}>Kies je categorie</Text>
 
-                <View style={styles.buttonRow}>
-                    <CategoryButton />
-                </View>
-            </ScrollView>
+                    <View style={styles.buttonRow}>
+                        <CategoryButton />
+                    </View>
+                </ScrollView>
 
-            {/* Navigatie bar */}
+                {/* Navigatie bar */}
+            </View>
             <AppNavigator />
         </SafeAreaView>
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
     container: {
+        backgroundColor: isDarkMode ? '#444' : '#fff',
+        flex: 1
+    },
+    scrollView: {
         padding: 16,
         paddingBottom: 100,
+        backgroundColor: isDarkMode ? '#444' : '#fff',
     },
     header: {
         flexDirection: 'row',
@@ -52,13 +58,12 @@ const styles = StyleSheet.create({
         paddingTop: 10,
         paddingLeft: 10,
     },
-
     subtitle: {
         fontSize: 18,
         fontWeight: '600',
         marginTop: 24,
         marginBottom: 8,
-        color: '#444',
+        color: isDarkMode ? '#fff' : '#444',
         textAlign: 'center',
     },
     buttonRow: {
