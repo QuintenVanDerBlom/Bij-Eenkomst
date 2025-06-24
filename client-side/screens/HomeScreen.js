@@ -10,35 +10,41 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { signOut } from 'firebase/auth';
-import { useAuth } from '../auth/AuthContext';
-import { auth } from '../firebaseConfig';
 import AppNavigator from '../navigation/AppNavigator';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig'; // pas dit pad aan als nodig
+
 
 export default function HomeScreen() {
     const navigation = useNavigation();
-    const { currentUser, userData } = useAuth(); // Get authentication state
+    const [fact, setFact] = useState('Even een feitje ophalen...');
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            Alert.alert('Uitgelogd', 'Je bent succesvol uitgelogd');
-        } catch (error) {
-            console.error('Logout error:', error);
-            Alert.alert('Fout', 'Er is een fout opgetreden bij uitloggen');
-        }
-    };
+    useEffect(() => {
+        const fetchFact = async () => {
+            try {
+                const snapshot = await getDocs(collection(db, 'bijen- en vlinder weetje'));
+                const facts = snapshot.docs.map(doc => doc.data().weetje);
+                if (facts.length === 0) {
+                    setFact('Geen feitjes gevonden.');
+                    return;
+                }
 
-    const confirmLogout = () => {
-        Alert.alert(
-            'Uitloggen',
-            'Weet je zeker dat je wilt uitloggen?',
-            [
-                { text: 'Annuleren', style: 'cancel' },
-                { text: 'Uitloggen', onPress: handleLogout, style: 'destructive' }
-            ]
-        );
-    };
+                const storedIndex = await AsyncStorage.getItem('factIndex');
+                const nextIndex = storedIndex ? (parseInt(storedIndex) + 1) % facts.length : 0;
+
+                setFact(facts[nextIndex]);
+                await AsyncStorage.setItem('factIndex', nextIndex.toString());
+            } catch (err) {
+                console.error('Fout bij ophalen feitjes:', err);
+                setFact('Feitje ophalen is mislukt.');
+            }
+        };
+
+        fetchFact();
+    }, []);
+
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -60,10 +66,50 @@ export default function HomeScreen() {
                     <Text style={styles.pageTitle}>Bij Eenkomst</Text>
                 </View>
 
-                {/* Grote bijenfeitje in het midden */}
-                <View style={styles.factContainer}>
-                    <Text style={styles.factBig}>🐝 Bijen zijn essentieel voor het ecosysteem!</Text>
+                {/* Conditional Authentication Buttons */}
+                <View style={styles.authButtonsContainer}>
+                    {currentUser ? (
+                        // Show logout button and welcome message when logged in
+                        <View style={styles.loggedInContainer}>
+                            {userData && (
+                                <Text style={styles.welcomeText}>
+                                    Welkom, {userData.full_name}!
+                                </Text>
+                            )}
+                            <TouchableOpacity
+                                style={[styles.authButton, styles.logoutButton]}
+                                onPress={confirmLogout}
+                            >
+                                <Text style={[styles.authButtonText, styles.logoutButtonText]}>
+                                    Uitloggen
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        // Show login/register buttons when not logged in
+                        <>
+                            <TouchableOpacity
+                                style={styles.authButton}
+                                onPress={() => navigation.navigate('Login')}
+                            >
+                                <Text style={styles.authButtonText}>Inloggen</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.authButton, styles.registerButton]}
+                                onPress={() => navigation.navigate('Register')}
+                            >
+                                <Text style={styles.authButtonText}>Registreren</Text>
+                            </TouchableOpacity>
+                        </>
+                    )}
                 </View>
+
+
+                <View style={styles.factContainer}>
+                    <Text style={styles.factBig}>{fact}</Text>
+                </View>
+
             </ScrollView>
 
             {/* Disclaimerblok met link onderaan */}
@@ -72,18 +118,13 @@ export default function HomeScreen() {
                     Wij zijn studenten en dit is een testplatform. De inhoud is bedoeld voor educatieve doeleinden en kan onvolledig of onjuist zijn.
                 </Text>
 
-                {/* Development/Admin links */}
-                <View style={styles.devLinksContainer}>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                        <Text style={styles.loginLink}>Admin Login</Text>
-                    </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                    <Text style={styles.loginLink}>Secret Admin login</Text>
+                </TouchableOpacity>
 
-                    <Text style={styles.linkSeparator}>•</Text>
-
-                    <TouchableOpacity onPress={() => navigation.navigate('TestMarijn')}>
-                        <Text style={styles.loginLink}>Test Page</Text>
-                    </TouchableOpacity>
-                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('TestMarijn')}>
+                    <Text style={styles.loginLink}>to Admin page</Text>
+                </TouchableOpacity>
             </View>
 
             <AppNavigator />
@@ -116,6 +157,54 @@ const styles = StyleSheet.create({
         textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 2,
     },
+    // Auth buttons container
+    authButtonsContainer: {
+        position: 'absolute',
+        top: 20,
+        right: 16,
+        flexDirection: 'row',
+        gap: 8,
+        alignItems: 'center',
+    },
+    // Logged in container
+    loggedInContainer: {
+        alignItems: 'flex-end',
+        gap: 8,
+    },
+    welcomeText: {
+        color: 'yellow',
+        fontSize: 12,
+        fontWeight: '600',
+        textShadowColor: '#000',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
+        maxWidth: 150,
+        textAlign: 'right',
+    },
+    authButton: {
+        backgroundColor: 'rgba(255, 215, 0, 0.9)',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#ffd700',
+    },
+    registerButton: {
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        borderColor: '#ffd700',
+    },
+    logoutButton: {
+        backgroundColor: 'rgba(220, 20, 60, 0.9)', // Crimson red
+        borderColor: '#dc143c',
+    },
+    authButtonText: {
+        color: '#444',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    logoutButtonText: {
+        color: '#fff', // White text for logout button
+    },
     factContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -147,22 +236,12 @@ const styles = StyleSheet.create({
         color: '#ddd',
         fontSize: 14,
         textAlign: 'center',
-        marginBottom: 12,
-    },
-    devLinksContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 8,
+        marginBottom: 8,
     },
     loginLink: {
         color: '#ffd700',
         fontSize: 14,
         textAlign: 'center',
         textDecorationLine: 'underline',
-    },
-    linkSeparator: {
-        color: '#ddd',
-        fontSize: 14,
     },
 });
