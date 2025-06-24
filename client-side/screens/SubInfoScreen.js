@@ -7,24 +7,30 @@ import {
     SafeAreaView,
     ScrollView,
     ActivityIndicator,
-    Image,
+    Image
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
 import { db } from "../firebaseConfig";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import {collection, query, where, getDoc, doc} from "firebase/firestore";
 
 export default function SubInfoScreen() {
     const route = useRoute();
     const navigation = useNavigation();
-    const { subcategoryId } = route.params;
-
-    const [entries, setEntries] = useState([]);
-    const [subcategory, setSubcategory] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const { entryId } = route.params;
+    const [entry, setEntry] = useState(null);
     const [expanded, setExpanded] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const imageMap = {
+        Zonnebloem: require('../assets/sunflower.png'),
+        Lavendel: require('../assets/lavender.png'),
+        Klaproos: require('../assets/rose.png'),
+        Bij: require('../assets/bee.png'),
+        Vlinder: require('../assets/bee.png')
+    };
 
     useEffect(() => {
         const loadData = async () => {
@@ -34,11 +40,15 @@ export default function SubInfoScreen() {
                 const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setEntries(data);
 
-                const subRef = doc(db, 'subcategories', subcategoryId);
-                const subSnap = await getDoc(subRef);
-                if (subSnap.exists()) {
-                    setSubcategory({ id: subSnap.id, ...subSnap.data() });
+                if (docSnap.exists()) {
+                    setEntry({ id: docSnap.id, ...docSnap.data() });
+                } else {
+                    setEntry(null);
                 }
+
+                // setEntries(data);
+                // console.log("categoryId", entryId);
+                console.log("entries", entry);
             } catch (error) {
                 console.error('Error loading data:', error);
             } finally {
@@ -47,7 +57,7 @@ export default function SubInfoScreen() {
         };
 
         loadData();
-    }, [subcategoryId]);
+    }, [entryId]);
 
     const toggleExpand = (index) => {
         setExpanded(expanded === index ? null : index);
@@ -114,16 +124,36 @@ export default function SubInfoScreen() {
                                             />
                                         )}
 
-                                    <Text style={styles.label}>Beschrijving:</Text>
-                                    <Text style={styles.text}>{entry.description}</Text>
+                <View style={styles.contentSection}>
+                    <Text style={styles.label}>Beschrijving:</Text>
+                    <Text style={styles.text}>{entry.description}</Text>
+                </View>
 
-                                    <Text style={styles.label}>Extra informatie:</Text>
-                                    <Text style={styles.text}>{entry.information}</Text>
-                                </View>
-                            )}
-                        </View>
-                    ))
-                )}
+                {/*{entry.sub_images && entry.sub_images.length > 0 && (*/}
+                {/*    <View style={styles.contentSection}>*/}
+                {/*        <Text style={styles.label}>Foto's:</Text>*/}
+                {/*        <View style={styles.insectContent}>*/}
+                {/*            {entry.sub_images.map((insect, index) => (*/}
+                {/*                <Image*/}
+                {/*                    key={index}*/}
+                {/*                    source={{uri: insect}}*/}
+                {/*                    style={styles.insectImage}*/}
+                {/*                />*/}
+                {/*            ))}*/}
+                {/*        </View>*/}
+                {/*    </View>*/}
+                {/*)}*/}
+
+                <View style={styles.contentSection}>
+                    <Text style={styles.label}>Extra informatie:</Text>
+                    <Text style={styles.text}>{entry.information}</Text>
+                </View>
+
+                {/*<View style={styles.contentSection}>*/}
+                {/*    <Text style={styles.label}>Bronnen:</Text>*/}
+                {/*    <Text>Dit moet nog in de database gezet worden</Text>*/}
+                {/*</View>*/}
+
             </ScrollView>
 
             <AppNavigator />

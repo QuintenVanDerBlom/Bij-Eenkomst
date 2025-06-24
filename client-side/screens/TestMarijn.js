@@ -307,8 +307,6 @@ export default function FirestoreCRUDPage() {
         fetchCollection('locations', setLocations);
         fetchCollection('users', setUsers);
         fetchCollection('entries', setEntries);
-        fetchCollection('blogposts', setBlogPosts);
-
     };
 
     useEffect(() => {

@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert, Modal, ScrollView, Image, KeyboardAvoidingView, Pressable, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert, Modal, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import AppNavigator from '../navigation/AppNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 const beeMarker = require('../assets/bee-marker.png');
 const butterflyMarker = require('../assets/butterfly-marker.png');
@@ -185,24 +183,6 @@ export default function MapScreen({ route }) {
     // Function to get the appropriate marker image
     const getMarkerImage = (type) => {
         return type === 'butterfly' ? butterflyMarker : beeMarker;
-    };
-
-    const markLocationAsVisited = async (location) => {
-        try {
-            const json = await AsyncStorage.getItem('visitedLocations');
-            const visited = json != null ? JSON.parse(json) : [];
-
-            const alreadyVisited = visited.some(item => item.name === location.name);
-            if (!alreadyVisited) {
-                visited.push(location);
-                await AsyncStorage.setItem('visitedLocations', JSON.stringify(visited));
-                setLocationSaved(true);
-            } else {
-                setLocationSaved(true);
-            }
-        } catch (e) {
-            console.error('Fout bij opslaan locatie:', e);
-        }
     };
 
     return (
@@ -595,23 +575,6 @@ export default function MapScreen({ route }) {
                                         </View>
                                     </View>
                                 )}
-
-                                <View>
-                                    <Pressable
-                                        style={[
-                                            styles.visitedButton,
-                                            locationSaved && styles.visitedButtonSaved
-                                        ]}
-                                        onPress={() => markLocationAsVisited({
-                                            name: selectedLocation.name
-                                        })}
-                                    >
-                                        <Text style={locationSaved ? styles.savedText : styles.unsavedText}>
-                                            {locationSaved ? 'Opgeslagen!' : 'Markeer als bezocht'}
-                                        </Text>
-                                    </Pressable>
-
-                                </View>
                             </View>
                         </ScrollView>
 
@@ -653,26 +616,21 @@ const styles = StyleSheet.create({
     headerButton: {
         backgroundColor: 'rgba(255,255,255,0.9)',
         borderRadius: 8,
-        padding: 8,
+        padding: 6,
         flexDirection: 'row',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    listButton: {
-        backgroundColor: 'rgba(255, 215, 0, 0.9)', // Yellow background for list button
-    },
-    headerButtonText: {
-        marginLeft: 6,
-        fontSize: 16,
-        color: '#333',
-        fontWeight: '500',
     },
     map: {
         ...StyleSheet.absoluteFillObject,
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    backText: {
+        marginLeft: 6,
+        fontSize: 16,
+        color: '#333',
     },
     // Custom marker container and image - TERUG NAAR ORIGINELE GROOTTE
     markerContainer: {
@@ -718,29 +676,6 @@ const styles = StyleSheet.create({
     typeButtonTextActive: {
         color: '#000',
         fontWeight: '600',
-    },
-    visitedButton: {
-        flex: 1,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        backgroundColor: '#f9f9f9',
-        alignItems: 'center',
-    },
-    visitedButtonSaved: {
-        backgroundColor: '#a5d6a7', // lichtgroen als visueel "success"
-        borderColor: '#388e3c',
-        borderWidth: 1,
-    },
-    unsavedText: {
-        color: '#000',
-        fontWeight: 'bold',
-    },
-    savedText: {
-        color: '#2e7d32', // donkergroen
-        fontWeight: 'bold',
     },
     // Modern modal styles - consistent across all modals
     modernModalOverlay: {
