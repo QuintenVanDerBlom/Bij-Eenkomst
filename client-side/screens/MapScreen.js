@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {useEffect, useState, useRef, useContext} from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text, TextInput, Alert, Modal, ScrollView, Image, KeyboardAvoidingView, Pressable, Platform } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 const beeMarker = require('../assets/bee-marker.png');
 const butterflyMarker = require('../assets/butterfly-marker.png');
@@ -27,6 +27,8 @@ export default function MapScreen({ route }) {
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [createModalVisible, setCreateModalVisible] = useState(false);
     const [locationSaved, setLocationSaved] = useState(false);
+    const {isDarkMode} = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     useEffect(() => {
         fetchLocations();
@@ -306,7 +308,7 @@ export default function MapScreen({ route }) {
                                     <View style={styles.detailsSection}>
                                         <View style={styles.detailRow}>
                                             <View style={styles.detailIconContainer}>
-                                                <Ionicons name="create-outline" size={20} color="#291700" />
+                                                <Ionicons name="create-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                             </View>
                                             <View style={styles.detailTextContainer}>
                                                 <Text style={styles.detailLabel}>Naam</Text>
@@ -321,7 +323,7 @@ export default function MapScreen({ route }) {
 
                                         <View style={styles.detailRow}>
                                             <View style={styles.detailIconContainer}>
-                                                <Ionicons name="document-text-outline" size={20} color="#291700" />
+                                                <Ionicons name="document-text-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                             </View>
                                             <View style={styles.detailTextContainer}>
                                                 <Text style={styles.detailLabel}>Beschrijving</Text>
@@ -339,7 +341,7 @@ export default function MapScreen({ route }) {
                                         {/* Type selector */}
                                         <View style={styles.detailRow}>
                                             <View style={styles.detailIconContainer}>
-                                                <Ionicons name="options-outline" size={20} color="#291700" />
+                                                <Ionicons name="options-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                             </View>
                                             <View style={styles.detailTextContainer}>
                                                 <Text style={styles.detailLabel}>Type</Text>
@@ -427,7 +429,7 @@ export default function MapScreen({ route }) {
                                 <View style={styles.detailsSection}>
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
-                                            <Ionicons name="location-outline" size={20} color="#291700" />
+                                            <Ionicons name="location-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                         </View>
                                         <View style={styles.detailTextContainer}>
                                             <Text style={styles.detailLabel}>Coördinaten</Text>
@@ -439,7 +441,7 @@ export default function MapScreen({ route }) {
 
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
-                                            <Ionicons name="create-outline" size={20} color="#291700" />
+                                            <Ionicons name="create-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                         </View>
                                         <View style={styles.detailTextContainer}>
                                             <Text style={styles.detailLabel}>Naam</Text>
@@ -448,13 +450,14 @@ export default function MapScreen({ route }) {
                                                 placeholder="Naam van de locatie"
                                                 onChangeText={(text) => setPinTitle(text)}
                                                 value={pinTitle}
+                                                placeholderTextColor={isDarkMode? "#fff": "#333"}
                                             />
                                         </View>
                                     </View>
 
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
-                                            <Ionicons name="document-text-outline" size={20} color="#291700" />
+                                            <Ionicons name="document-text-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                         </View>
                                         <View style={styles.detailTextContainer}>
                                             <Text style={styles.detailLabel}>Beschrijving</Text>
@@ -465,6 +468,7 @@ export default function MapScreen({ route }) {
                                                 value={pinDescription}
                                                 multiline
                                                 numberOfLines={4}
+                                                placeholderTextColor={isDarkMode? "#fff": "#333"}
                                             />
                                         </View>
                                     </View>
@@ -472,7 +476,7 @@ export default function MapScreen({ route }) {
                                     {/* Type selector */}
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
-                                            <Ionicons name="options-outline" size={20} color="#291700" />
+                                            <Ionicons name="options-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                         </View>
                                         <View style={styles.detailTextContainer}>
                                             <Text style={styles.detailLabel}>Type</Text>
@@ -548,7 +552,7 @@ export default function MapScreen({ route }) {
                             <View style={styles.detailsSection}>
                                 <View style={styles.detailRow}>
                                     <View style={styles.detailIconContainer}>
-                                        <Ionicons name="location-outline" size={20} color="#291700" />
+                                        <Ionicons name="location-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                     </View>
                                     <View style={styles.detailTextContainer}>
                                         <Text style={styles.detailLabel}>Coördinaten</Text>
@@ -561,7 +565,7 @@ export default function MapScreen({ route }) {
                                 {selectedLocation?.type && (
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
-                                            <Ionicons name="options-outline" size={20} color="#291700" />
+                                            <Ionicons name="options-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                         </View>
                                         <View style={styles.detailTextContainer}>
                                             <Text style={styles.detailLabel}>Type</Text>
@@ -575,7 +579,7 @@ export default function MapScreen({ route }) {
                                 {selectedLocation?.description && (
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
-                                            <Ionicons name="document-text-outline" size={20} color="#291700" />
+                                            <Ionicons name="document-text-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                         </View>
                                         <View style={styles.detailTextContainer}>
                                             <Text style={styles.detailLabel}>Beschrijving</Text>
@@ -587,7 +591,7 @@ export default function MapScreen({ route }) {
                                 {selectedLocation?.user_id && (
                                     <View style={styles.detailRow}>
                                         <View style={styles.detailIconContainer}>
-                                            <Ionicons name="person-outline" size={20} color="#291700" />
+                                            <Ionicons name="person-outline" size={20} color={isDarkMode? "#fff": "#291700"} />
                                         </View>
                                         <View style={styles.detailTextContainer}>
                                             <Text style={styles.detailLabel}>Eigenaar ID</Text>
@@ -635,7 +639,7 @@ export default function MapScreen({ route }) {
     );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
     container: {
         flex: 1,
         position: 'relative',
@@ -749,7 +753,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modernModalContainer: {
-        backgroundColor: 'white',
+        backgroundColor: isDarkMode ? '#1e1e1e' : 'white',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         maxHeight: '95%',
@@ -768,7 +772,7 @@ const styles = StyleSheet.create({
         top: 16,
         right: 16,
         zIndex: 10,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: isDarkMode ? '#333' : '#f5f5f5',
         borderRadius: 20,
         width: 40,
         height: 40,
@@ -783,7 +787,7 @@ const styles = StyleSheet.create({
     modernModalTitle: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: '#1a1a1a',
+        color: isDarkMode ? '#fff' : '#1a1a1a',
         marginBottom: 30,
         textAlign: 'center',
     },
@@ -800,7 +804,7 @@ const styles = StyleSheet.create({
         width: 45,
         height: 45,
         borderRadius: 22.5,
-        backgroundColor: '#FFF8DC',
+        backgroundColor: isDarkMode ? '#333' : '#FFF8DC',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 18,
@@ -813,23 +817,24 @@ const styles = StyleSheet.create({
     detailLabel: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#666',
+        color: isDarkMode ? '#ccc' : '#666',
         marginBottom: 6,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     detailValue: {
         fontSize: 18,
-        color: '#1a1a1a',
+        color: isDarkMode ? '#f5f5f5' : '#1a1a1a',
         lineHeight: 26,
     },
     modernInput: {
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: isDarkMode ? '#555' : '#ddd',
         borderRadius: 8,
         padding: 12,
         fontSize: 16,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: isDarkMode ? '#2c2c2c' : '#f9f9f9',
+        color: isDarkMode ? '#fff' : '#000',
         marginTop: 4,
         minHeight: 44,
     },
@@ -841,7 +846,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingVertical: 25,
         borderTopWidth: 1,
-        borderTopColor: '#f0f0f0',
+        borderTopColor: isDarkMode ? '#333' : '#f0f0f0',
         flexDirection: 'row',
         gap: 12,
     },
@@ -884,7 +889,7 @@ const styles = StyleSheet.create({
         shadowColor: '#FF4444',
     },
     modernButtonText: {
-        color: 'black',
+        color: isDarkMode ? '#000' : '#000',
         fontSize: 17,
         fontWeight: '600',
         marginLeft: 8,
