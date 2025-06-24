@@ -6,11 +6,19 @@ import AppNavigator from '../navigation/AppNavigator';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, deleteDoc, updateDoc, doc } from 'firebase/firestore';
+import { useAuth } from '../auth/AuthContext';
 
 const beeMarker = require('../assets/bee-marker.png');
 const butterflyMarker = require('../assets/butterfly-marker.png');
 
 export default function MapScreen({ route }) {
+    const { currentUser } = useAuth();
+
+    useEffect(() => {
+        if (currentUser) {
+            fetchLocations();
+        }
+    }, [currentUser]);
     const navigation = useNavigation();
     const { focusLocation } = route.params || {};
     const mapRef = useRef(null);
