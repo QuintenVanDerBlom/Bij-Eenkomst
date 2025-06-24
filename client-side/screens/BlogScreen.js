@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, ActivityIndicator, Image
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
 import { db } from "../firebaseConfig";
 import {collection, query, where, getDoc, doc, getDocs} from "firebase/firestore";
+import {DarkModeContext} from "../Contexts/DarkModeContext";
 
 export default function BlogScreen() {
     const route = useRoute();
@@ -15,6 +16,8 @@ export default function BlogScreen() {
     const [users, setUsers] = useState([]);
     const [expandedPosts, setExpandedPosts] = useState({});
     const [loading, setLoading] = useState(true);
+    const { isDarkMode } = useContext(DarkModeContext);
+    const styles = getStyles(isDarkMode);
 
     useEffect(() => {
         const loadData = async () => {
@@ -69,7 +72,7 @@ export default function BlogScreen() {
     }
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+        <SafeAreaView style={styles.container}>
             <HeaderBar />
 
             <View style={styles.header}>
@@ -117,15 +120,19 @@ export default function BlogScreen() {
     );
 }
 
-const styles = StyleSheet.create({
+export const getStyles = (isDarkMode) => StyleSheet.create({
+    container: {
+        flex:1,
+        backgroundColor: isDarkMode? "#333": "#fff"
+    },
     header: {
         flexDirection: 'row',
         justifyContent: 'center',
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderColor: '#ddd',
-        backgroundColor: '#fff',
+        borderColor: isDarkMode? '#444' : '#ddd',
+        backgroundColor: isDarkMode? '#1a1a1a' : '#fff',
     },
     backButton: {
         paddingRight: 12,
@@ -134,8 +141,8 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#222',
-        textAlign: 'center'
+        color: isDarkMode? '#fff' : '#222',
+        textAlign: 'center',
     },
     content: {
         padding: 20,
@@ -152,10 +159,10 @@ const styles = StyleSheet.create({
     postContainer: {
         marginBottom: 20,
         width: '100%',
-        backgroundColor: '#f9f9f9',
+        backgroundColor: isDarkMode? '#2a2a2a' : '#f9f9f9',
         borderRadius: 10,
         padding: 10,
-        shadowColor: '#291700',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -164,22 +171,23 @@ const styles = StyleSheet.create({
     postTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        marginTop: 10
+        color: isDarkMode? '#fff' : '#000',
+        marginTop: 10,
     },
     postContent: {
         fontSize: 14,
-        color: '#555',
-        marginTop: 4
+        color: isDarkMode? '#ccc' : '#555',
+        marginTop: 4,
     },
     expandText: {
-        color: '#785C82',
+        color: isDarkMode? '#cba3de' : '#785C82',
         marginTop: 5,
         fontWeight: '600',
     },
     postAuthor: {
         fontSize: 12,
         fontStyle: 'italic',
-        color: '#666',
+        color: isDarkMode? '#aaa' : '#666',
         marginTop: 2,
     },
     postImage: {
@@ -187,6 +195,6 @@ const styles = StyleSheet.create({
         height: 200,
         borderRadius: 10,
         marginBottom: 10,
-        marginTop: 10
+        marginTop: 10,
     }
 });
