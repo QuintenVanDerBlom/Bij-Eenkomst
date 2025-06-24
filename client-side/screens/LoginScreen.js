@@ -1,5 +1,5 @@
 // LoginScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -18,6 +18,21 @@ import { auth, db } from '../firebaseConfig';
 
 export default function LoginScreen() {
     const navigation = useNavigation();
+
+    useEffect(() => {
+        const backAction = () => {
+            navigation.navigate('Home');
+            return true;
+        };
+
+        const backHandler = navigation.addListener('beforeRemove', (e) => {
+            e.preventDefault();
+            backAction();
+        });
+
+        return backHandler;
+    }, [navigation]);
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -50,7 +65,6 @@ export default function LoginScreen() {
             const userData = await getUserData(userCredential.user.uid);
 
             if (userData) {
-                // Check if user is admin
                 const roleQuery = query(collection(db, 'roles'), where('__name__', '==', userData.role_id));
                 const roleSnapshot = await getDocs(roleQuery);
 
