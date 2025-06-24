@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image, SafeAreaView} from 'react-native';
+import {View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Image} from 'react-native';
 import {db} from '../firebaseConfig';
 import {collection, addDoc, getDocs, deleteDoc, updateDoc, doc} from 'firebase/firestore';
 import {Picker} from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -12,8 +13,12 @@ import {storage} from '../firebaseConfig';
 import HeaderBar from "../navigation/HeaderBar";
 import {MaterialIcons} from "@expo/vector-icons";
 
+import { useAuth } from '../auth/AuthContext';
+
 export default function MakeBlogScreen() {
     const navigation = useNavigation();
+    const { userData } = useAuth();
+
     const [blogPosts, setBlogPosts] = useState([]);
     const [locations, setLocations] = useState([]);
 
@@ -26,6 +31,16 @@ export default function MakeBlogScreen() {
         fetchCollection('locations', setLocations);
 
     };
+
+    useEffect(() => {
+        if (userData) {
+            setFormBlogPost((prev) => ({
+                ...prev,
+                user_id: userData.id
+            }));
+        }
+    }, [userData]);
+
 
     useEffect(() => {
         loadData();
@@ -79,7 +94,6 @@ export default function MakeBlogScreen() {
     }, []);
 
     const [formBlogPost, setFormBlogPost] = useState({
-        user_id: '',
         title: '',
         location_id: '',
         content: '',
@@ -91,22 +105,37 @@ export default function MakeBlogScreen() {
     };
 
     const addBlogPost = async () => {
-        const {user_id, title, location_id, content, images} = formBlogPost;
-        if (!user_id || !title || !content) return;
+        const { user_id, title, location_id, content, images } = formBlogPost;
 
-        console.log("Images before upload:", images);
+        console.log("user_id:", user_id); // Debugging
+        if (!user_id || !title || !content) {
+            alert("Vul alle verplichte velden in.");
+            return;
+        }
 
-        await addDoc(collection(db, 'blogposts'), {
-            user_id,
-            title,
-            location_id: location_id || null,
-            content,
-            images: formBlogPost.images,
-            created_at: new Date().toISOString()
-        });
+        try {
+            await addDoc(collection(db, 'blogposts'), {
+                user_id: userData.id,
+                title,
+                location_id: location_id || null,
+                content,
+                images,
+                created_at: new Date().toISOString()
+            });
 
-        setFormBlogPost({user_id: '', title: '', location_id: '', content: '', images: []});
+            setFormBlogPost({
+                title: '',
+                location_id: '',
+                content: '',
+                images: []
+            });
+            alert("Blog succesvol geplaatst!");
+        } catch (err) {
+            console.error("Fout bij opslaan:", err);
+            alert("Er ging iets mis bij het posten.");
+        }
     };
+
 
     return (
         <SafeAreaView style={{flex: 1, backgroundColor: '#fff'}}>
@@ -167,9 +196,12 @@ export default function MakeBlogScreen() {
                     </View>
                 )}
 
-                <TouchableOpacity onPress={addBlogPost} style={styles.postButton}>
-                    <Text style={styles.buttonText}>Post</Text>
-                </TouchableOpacity>
+                {userData && (
+                    <TouchableOpacity onPress={addBlogPost} style={styles.postButton}>
+                        <Text style={styles.buttonText}>Post</Text>
+                    </TouchableOpacity>
+                )}
+
             </ScrollView>
         </SafeAreaView>
 
