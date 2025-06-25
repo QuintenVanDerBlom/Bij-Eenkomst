@@ -137,14 +137,6 @@ export default function HomeScreen() {
                 <Text style={styles.description}>
                     Wij zijn studenten en dit is een testplatform. De inhoud is bedoeld voor educatieve doeleinden en kan onvolledig of onjuist zijn.
                 </Text>
-
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                    <Text style={styles.loginLink}>Secret Admin login</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => navigation.navigate('TestMarijn')}>
-                    <Text style={styles.loginLink}>to Admin page</Text>
-                </TouchableOpacity>
             </View>
 
             <AppNavigator />
