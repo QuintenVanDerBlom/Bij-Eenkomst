@@ -123,7 +123,7 @@ const getStyles = (isDarkMode) => StyleSheet.create({
     },
     searchInput: {
         height: 40,
-        borderColor: isDarkMode ? '#555' : '#fff',
+        borderColor: isDarkMode ? '#555' : '#333',
         borderWidth: 1,
         borderRadius: 20,
         paddingHorizontal: 15,

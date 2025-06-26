@@ -138,110 +138,111 @@ export default function ProfileScreen() {
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <HeaderBar/>
-
-            <ScrollView contentContainerStyle={styles.container}>
-                <View>
-                    <Text style={styles.title}>Profiel</Text>
-                    <Text style={styles.welcome}>Welkom</Text>
-                    <Text style={styles.username}>{userData?.full_name}</Text>
-                </View>
-
-                <View style={styles.profileCard}>
-                    <View style={styles.cardHeader}>
-                        <Text style={styles.cardTitle}>Naam:</Text>
-                        <Pressable style={styles.editIcon} onPress={() => setModalVisible(true)}>
-                            <Feather name="tool" size={20} color="#000" />
-                        </Pressable>
+            <View style={styles.container}>
+                <ScrollView contentContainerStyle={styles.container}>
+                    <View>
+                        <Text style={styles.title}>Profiel</Text>
+                        <Text style={styles.welcome}>Welkom</Text>
+                        <Text style={styles.username}>{userData?.full_name}</Text>
                     </View>
-                    <Text style={styles.cardText}>{userData?.full_name}</Text>
-                    <Text style={styles.cardTitle}>E-mail:</Text>
-                    <Text style={styles.cardText}>{userData?.mail_address}</Text>
-                    <Text style={styles.cardTitle}>Wachtwoord:</Text>
-                    <View style={styles.passwordRow}>
-                        <Text style={styles.cardText}>{showPassword ? userData.password : '********'}</Text>
-                        <Pressable onPress={() => setShowPassword(!showPassword)}>
-                            <Feather
-                                name={showPassword ? 'eye-off' : 'eye'}
-                                size={18}
-                                color={isDarkMode ? '#fff' : '#000'}
-                            />
-                        </Pressable>
-                    </View>
-                </View>
 
-                <View>
-                    <Text style={styles.sectionTitle}>Bezochte locaties:</Text>
-                    {visitedLocations.length === 0 ? (
-                        <Text>Je hebt nog geen locaties bezocht.</Text>
-                    ) : (
-                        visitedLocations.map((location, index) => (
-                            <Pressable key={index} style={styles.locationButton}>
-                                <Text style={styles.locationText}>{location.name}</Text>
+                    <View style={styles.profileCard}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardTitle}>Naam:</Text>
+                            <Pressable style={styles.editIcon} onPress={() => setModalVisible(true)}>
+                                <Feather name="tool" size={20} color="#000" />
                             </Pressable>
-                        ))
-                    )}
-                </View>
-
-                <View style={styles.switchRow}>
-                    <Text style={styles.switchLabel}>Darkmode</Text>
-                    <Switch
-                        value={isDarkMode}
-                        onValueChange={toggleDarkMode}
-                        thumbColor={isDarkMode ? '#fff' : '#000'}
-                        trackColor={{ true: '#6c6c6c', false: '#ccc' }}
-                    />
-                </View>
-
-                <Modal
-                    visible={isModalVisible}
-                    animationType="slide"
-                    transparent={true}
-                    onRequestClose={() => setModalVisible(false)}
-                >
-                    <View style={styles.modalBackground}>
-                        <View style={styles.modalContainer}>
-                            <Text style={styles.modalTitle}>Profiel aanpassen</Text>
-
-                            <Text style={styles.label}>Naam:</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder={userData.full_name || ''}
-                                value={editedName}
-                                onChangeText={setEditedName}
-                                placeholderTextColor={isDarkMode? "#fff": "#333"}
-                            />
-                            <Text style={styles.label}>E-mail:</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder={userData.mail_address || ''}
-                                value={editedEmail}
-                                onChangeText={setEditedEmail}
-                                placeholderTextColor={isDarkMode? "#fff": "#333"}
-                            />
-                            <Text style={styles.label}>Wachtwoord:</Text>
-                            <TextInput
-                                style={styles.input}
-                                secureTextEntry
-                                value={editedPassword}
-                                onChangeText={setEditedPassword}
-                            />
-
-                            <Pressable style={styles.saveButton} onPress={handleSave}>
-                                <Text style={styles.saveButtonText}>Opslaan</Text>
+                        </View>
+                        <Text style={styles.cardText}>{userData?.full_name}</Text>
+                        <Text style={styles.cardTitle}>E-mail:</Text>
+                        <Text style={styles.cardText}>{userData?.mail_address}</Text>
+                        <Text style={styles.cardTitle}>Wachtwoord:</Text>
+                        <View style={styles.passwordRow}>
+                            <Text style={styles.cardText}>{showPassword ? userData.password : '********'}</Text>
+                            <Pressable onPress={() => setShowPassword(!showPassword)}>
+                                <Feather
+                                    name={showPassword ? 'eye-off' : 'eye'}
+                                    size={18}
+                                    color={isDarkMode ? '#fff' : '#000'}
+                                />
                             </Pressable>
-
-                            <View style={styles.deleteAccount}>
-                                <Pressable onPress={() => setModalVisible(false)}>
-                                    <Text style={{ color: 'red', marginTop: 20 }}>Annuleer</Text>
-                                </Pressable>
-                                <Pressable onPress={() => handleDeleteAccount()}>
-                                    <Text style={{ color: 'red', marginTop: 20 }}>Verwijder account</Text>
-                                </Pressable>
-                            </View>
                         </View>
                     </View>
-                </Modal>
-            </ScrollView>
+
+                    <View>
+                        <Text style={styles.sectionTitle}>Bezochte locaties:</Text>
+                        {visitedLocations.length === 0 ? (
+                            <Text>Je hebt nog geen locaties bezocht.</Text>
+                        ) : (
+                            visitedLocations.map((location, index) => (
+                                <Pressable key={index} style={styles.locationButton}>
+                                    <Text style={styles.locationText}>{location.name}</Text>
+                                </Pressable>
+                            ))
+                        )}
+                    </View>
+
+                    <View style={styles.switchRow}>
+                        <Text style={styles.switchLabel}>Darkmode</Text>
+                        <Switch
+                            value={isDarkMode}
+                            onValueChange={toggleDarkMode}
+                            thumbColor={isDarkMode ? '#fff' : '#000'}
+                            trackColor={{ true: '#6c6c6c', false: '#ccc' }}
+                        />
+                    </View>
+
+                    <Modal
+                        visible={isModalVisible}
+                        animationType="slide"
+                        transparent={true}
+                        onRequestClose={() => setModalVisible(false)}
+                    >
+                        <View style={styles.modalBackground}>
+                            <View style={styles.modalContainer}>
+                                <Text style={styles.modalTitle}>Profiel aanpassen</Text>
+
+                                <Text style={styles.label}>Naam:</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder={userData.full_name || ''}
+                                    value={editedName}
+                                    onChangeText={setEditedName}
+                                    placeholderTextColor={isDarkMode? "#fff": "#333"}
+                                />
+                                <Text style={styles.label}>E-mail:</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder={userData.mail_address || ''}
+                                    value={editedEmail}
+                                    onChangeText={setEditedEmail}
+                                    placeholderTextColor={isDarkMode? "#fff": "#333"}
+                                />
+                                <Text style={styles.label}>Wachtwoord:</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    secureTextEntry
+                                    value={editedPassword}
+                                    onChangeText={setEditedPassword}
+                                />
+
+                                <Pressable style={styles.saveButton} onPress={handleSave}>
+                                    <Text style={styles.saveButtonText}>Opslaan</Text>
+                                </Pressable>
+
+                                <View style={styles.deleteAccount}>
+                                    <Pressable onPress={() => setModalVisible(false)}>
+                                        <Text style={{ color: 'red', marginTop: 20 }}>Annuleer</Text>
+                                    </Pressable>
+                                    <Pressable onPress={() => handleDeleteAccount()}>
+                                        <Text style={{ color: 'red', marginTop: 20 }}>Verwijder account</Text>
+                                    </Pressable>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+                </ScrollView>
+            </View>
             <AppNavigator/>
         </SafeAreaView>
     );
@@ -252,6 +253,7 @@ const getStyles = (isDarkMode) => StyleSheet.create({
         backgroundColor: isDarkMode ? '#121212' : '#fff',
     },
     container: {
+        flex:1,
         padding: 20,
         alignItems: 'center',
         backgroundColor: isDarkMode ? '#1e1e1e' : '#fff',
