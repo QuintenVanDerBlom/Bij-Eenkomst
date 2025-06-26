@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -7,6 +7,7 @@ import {
     ScrollView,
     ActivityIndicator,
     Image,
+    Modal,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,7 +16,7 @@ import HeaderBar from '../navigation/HeaderBar';
 import AppNavigator from '../navigation/AppNavigator';
 import { db } from "../firebaseConfig";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
-import {DarkModeContext} from "../Contexts/DarkModeContext";
+import { DarkModeContext } from "../Contexts/DarkModeContext";
 
 export default function SubInfoScreen() {
     const route = useRoute();
@@ -26,7 +27,11 @@ export default function SubInfoScreen() {
     const [subcategory, setSubcategory] = useState(null);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState(null);
-    const {isDarkMode} = useContext(DarkModeContext);
+    const [difficultWords, setDifficultWords] = useState([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedWordInfo, setSelectedWordInfo] = useState(null);
+
+    const { isDarkMode } = useContext(DarkModeContext);
     const styles = getStyles(isDarkMode);
 
     useEffect(() => {
@@ -37,11 +42,15 @@ export default function SubInfoScreen() {
                 const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setEntries(data);
 
-                const subRef = doc(db, 'subcategories', subcategoryId);
-                const subSnap = await getDoc(subRef);
+                const subSnap = await getDoc(doc(db, 'subcategories', subcategoryId));
                 if (subSnap.exists()) {
                     setSubcategory({ id: subSnap.id, ...subSnap.data() });
                 }
+
+                const difficultSnap = await getDocs(collection(db, 'difficultWords'));
+                const difficultData = difficultSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setDifficultWords(difficultData);
+
             } catch (error) {
                 console.error('Error loading data:', error);
             } finally {
@@ -56,6 +65,32 @@ export default function SubInfoScreen() {
         setExpanded(expanded === index ? null : index);
     };
 
+    const highlightWords = (text) => {
+        if (!text || difficultWords.length === 0) return text;
+
+        const wordList = difficultWords.map(w => w.name);
+        const parts = text.split(new RegExp(`(${wordList.join("|")})`, "gi"));
+
+        return parts.map((part, index) => {
+            const match = difficultWords.find(word => word.name.toLowerCase() === part.toLowerCase());
+            if (match) {
+                return (
+                    <Text
+                        key={index}
+                        style={{ color: 'blue', textDecorationLine: 'underline' }}
+                        onPress={() => {
+                            setSelectedWordInfo(match);
+                            setModalVisible(true);
+                        }}
+                    >
+                        {part}
+                    </Text>
+                );
+            }
+            return <Text key={index}>{part}</Text>;
+        });
+    };
+
     if (loading) {
         return (
             <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -67,70 +102,71 @@ export default function SubInfoScreen() {
     return (
         <SafeAreaView style={{ flex: 1 }}>
             <HeaderBar />
-
             <ScrollView style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <MaterialIcons name="arrow-back" size={28} color={isDarkMode? "#fff": "#444"}/>
+                        <MaterialIcons name="arrow-back" size={28} color={isDarkMode ? "#fff" : "#444"} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>{subcategory?.name || 'Subcategorie Info'}</Text>
                 </View>
 
                 {subcategory?.description && (
-                    <Text style={styles.subcategoryDescription}>{subcategory.description}</Text>
+                    <Text style={styles.subcategoryDescription}>{highlightWords(subcategory.description)}</Text>
                 )}
 
-                <ScrollView contentContainerStyle={styles.container}>
-                    {entries.length === 0 ? (
-                        <Text>Geen entries gevonden voor deze subcategorie.</Text>
-                    ) : (
-                        entries.map((entry, index) => (
-                            <View key={entry.id} style={styles.accordionItem}>
+                {entries.map((entry, index) => (
+                    <View key={entry.id} style={styles.accordionItem}>
+                        <TouchableOpacity style={styles.accordionHeader} onPress={() => toggleExpand(index)}>
+                            <Text style={styles.accordionTitle}>{entry.title}</Text>
+                            <MaterialIcons
+                                name={expanded === index ? 'expand-less' : 'expand-more'}
+                                size={24}
+                                color="#444"
+                            />
+                        </TouchableOpacity>
 
-                                {/* Accordion header: alleen titel + icoon */}
-                                <TouchableOpacity
-                                    style={styles.accordionHeader}
-                                    onPress={() => toggleExpand(index)}
-                                >
-                                    <Text style={styles.accordionTitle}>{entry.title}</Text>
-                                    <MaterialIcons
-                                        name={expanded === index ? 'expand-less' : 'expand-more'}
-                                        size={24}
-                                        color="#444"
+                        {expanded === index && (
+                            <View style={styles.accordionContent}>
+                                {entry.head_image && typeof entry.head_image === 'string' && entry.head_image.startsWith('http') && (
+                                    <Image
+                                        source={{ uri: entry.head_image }}
+                                        style={styles.image}
+                                        resizeMode="contain"
                                     />
-                                </TouchableOpacity>
-
-                                {/* Accordion content: wordt alleen gerenderd als expanded */}
-                                {expanded === index && (
-                                    <View style={styles.accordionContent}>
-
-                                        {/* Image alleen tonen als head_image bestaat en een geldige URL is */}
-                                        {entry.head_image &&
-                                            typeof entry.head_image === 'string' &&
-                                            entry.head_image.startsWith('http') && (
-                                                <Image
-                                                    source={{ uri: entry.head_image }}
-                                                    style={styles.image}
-                                                    resizeMode="contain"
-                                                    onError={(error) => {
-                                                        console.warn('Afbeelding kon niet worden geladen:', entry.head_image, error.nativeEvent);
-                                                    }}
-                                                />
-                                            )}
-
-                                        <Text style={styles.label}>Beschrijving:</Text>
-                                        <Text style={styles.text}>{entry.description}</Text>
-
-                                        <Text style={styles.label}>Extra informatie:</Text>
-                                        <Text style={styles.text}>{entry.information}</Text>
-                                    </View>
                                 )}
+
+                                <Text style={styles.label}>Beschrijving:</Text>
+                                <Text style={styles.text}>{highlightWords(entry.description)}</Text>
+
+                                <Text style={styles.label}>Extra informatie:</Text>
+                                <Text style={styles.text}>{highlightWords(entry.information)}</Text>
                             </View>
-                        ))
-                    )}
-                </ScrollView>
+                        )}
+                    </View>
+                ))}
+
                 <View style={styles.filler}></View>
             </ScrollView>
+
+            {selectedWordInfo && (
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => setModalVisible(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>{selectedWordInfo.name}</Text>
+                            <Text style={styles.modalText}>{selectedWordInfo.description}</Text>
+                            <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.modalButton}>
+                                <Text style={styles.modalButtonText}>Sluiten</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            )}
+
             <AppNavigator />
         </SafeAreaView>
     );
@@ -140,7 +176,7 @@ const getStyles = (isDarkMode) => StyleSheet.create({
     container: {
         padding: 20,
         backgroundColor: isDarkMode ? '#121212' : '#fff',
-        flex:1
+        flex: 1,
     },
     header: {
         flexDirection: 'row',
@@ -207,8 +243,41 @@ const getStyles = (isDarkMode) => StyleSheet.create({
         color: isDarkMode ? '#ccc' : '#555',
         lineHeight: 20,
     },
-    filler:{
+    filler: {
         paddingTop: 70,
         paddingBottom: 10
-    }
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+        width: '80%',
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    modalText: {
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    modalButton: {
+        backgroundColor: '#007bff',
+        paddingVertical: 8,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+    },
+    modalButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
 });
